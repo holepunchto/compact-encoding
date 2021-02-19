@@ -1,0 +1,24 @@
+{
+  "name": "compact-encoding",
+  "version": "0.0.0",
+  "description": "A series of compact encoding schemes for building small and fast parsers and serializers",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "standard": "^16.0.3",
+    "tape": "^5.1.1"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/compact-encoding.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/compact-encoding/issues"
+  },
+  "homepage": "https://github.com/mafintosh/compact-encoding"
+}
