@@ -40,9 +40,9 @@ tape('int', function (t) {
 
   state.buffer = Buffer.alloc(state.end)
   enc.int.encode(state, 42)
-  t.same(state, { start: 1, end: 4, buffer: Buffer.from([83, 0, 0, 0]) })
+  t.same(state, { start: 1, end: 4, buffer: Buffer.from([84, 0, 0, 0]) })
   enc.int.encode(state, -4200)
-  t.same(state, { start: 4, end: 4, buffer: Buffer.from([83, 0xfd, 208, 32]) })
+  t.same(state, { start: 4, end: 4, buffer: Buffer.from([84, 0xfd, 207, 32]) })
 
   state.start = 0
   t.same(enc.int.decode(state), 42)

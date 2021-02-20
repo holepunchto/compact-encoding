@@ -23,23 +23,23 @@ const uint = exports.uint = {
 
 exports.int = {
   preencode (state, n) {
-    uint.preencode(state, signedEncode(n))
+    uint.preencode(state, zigzagEncode(n))
   },
   encode (state, n) {
-    uint.encode(state, signedEncode(n))
+    uint.encode(state, zigzagEncode(n))
   },
   decode (state) {
-    return signedDecode(uint.decode(state))
+    return zigzagDecode(uint.decode(state))
   }
 }
 
-function signedDecode (n) {
-  return n === 0 ? n : (n & 1) === 0 ? -n / 2 : (n + 1) / 2
+function zigzagDecode (n) {
+  return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
 }
 
-function signedEncode (n) {
-  // 0, 1, -1, 2, -2, ...
-  return n < 0 ? (2 * -n) : n === 0 ? 0 : (2 * n - 1)
+function zigzagEncode (n) {
+  // 0, -1, 1, -2, 2, ...
+  return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
 }
 
 exports.buffer = {
