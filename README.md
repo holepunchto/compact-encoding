@@ -36,7 +36,9 @@ cenc.string.decode(state) // 'hi'
 
 #### `state`
 
-Should be an object that looks like this `{ start, end, buffer }`
+Should be an object that looks like this `{ start, end, buffer }`.
+
+You can also get a blank state object using `cenc.state()`.
 
 #### `enc.preencode(state, val)`
 
@@ -59,7 +61,7 @@ The following encodings are bundled as they are primitives that can be used
 to build others on top. Feel free to PR more that are missing.
 
 * `cenc.uint` - Encodes a uint using [compact-uint](https://github.com/mafintosh/compact-uint)
-* `cenc.int` - Encodes an int using [compact-uint](https://github.com/mafintosh/compact-uint) as a signed int.
+* `cenc.int` - Encodes an int using [compact-uint](https://github.com/mafintosh/compact-uint) as a signed int using ZigZag encoding.
 * `cenc.buffer` - Encodes a buffer with it's length uint prefixed. When decoding an empty buf, null is returned.
 * `cenc.raw` - Pass through encodes a buffer - ie a basic copy.
 * `cenc.uint32array` - Encodes a uint32array with it's length uint32 prefixed along with a 2 bit padding for alignment.

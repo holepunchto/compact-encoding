@@ -2,7 +2,7 @@ const enc = require('./')
 const tape = require('tape')
 
 tape('uint', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.uint.preencode(state, 42)
   t.same(state, { start: 0, end: 1, buffer: null })
@@ -31,7 +31,7 @@ tape('uint', function (t) {
 })
 
 tape('int', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.int.preencode(state, 42)
   t.same(state, { start: 0, end: 1, buffer: null })
@@ -55,7 +55,7 @@ tape('int', function (t) {
 })
 
 tape('buffer', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.buffer.preencode(state, Buffer.from('hi'))
   t.same(state, { start: 0, end: 3, buffer: null })
@@ -87,7 +87,7 @@ tape('buffer', function (t) {
 })
 
 tape('raw', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.raw.preencode(state, Buffer.from('hi'))
   t.same(state, { start: 0, end: 2, buffer: null })
@@ -104,7 +104,7 @@ tape('raw', function (t) {
 })
 
 tape('uint32array', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.uint32array.preencode(state, new Uint32Array([1]))
   t.same(state, { start: 0, end: 8, buffer: null })
@@ -145,7 +145,7 @@ tape('uint32array', function (t) {
 })
 
 tape('string', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.string.preencode(state, 'hi')
   t.same(state, { start: 0, end: 3, buffer: null })
@@ -169,7 +169,7 @@ tape('string', function (t) {
 })
 
 tape('fixed32', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.fixed32.preencode(state, Buffer.alloc(32).fill('a'))
   t.same(state, { start: 0, end: 32, buffer: null })
@@ -193,7 +193,7 @@ tape('fixed32', function (t) {
 })
 
 tape('fixed64', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
 
   enc.fixed64.preencode(state, Buffer.alloc(64).fill('a'))
   t.same(state, { start: 0, end: 64, buffer: null })
@@ -217,7 +217,7 @@ tape('fixed64', function (t) {
 })
 
 tape('fixed n', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
   const fixed = enc.fixed(3)
 
   fixed.preencode(state, Buffer.alloc(3).fill('a'))
@@ -244,7 +244,7 @@ tape('fixed n', function (t) {
 })
 
 tape('array', function (t) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = enc.state()
   const arr = enc.array(enc.bool)
 
   arr.preencode(state, [true, false, true])

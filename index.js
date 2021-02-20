@@ -1,6 +1,10 @@
 const LE = (new Uint8Array(new Uint16Array([255]).buffer))[0] === 0xff
 const BE = !LE
 
+exports.state = function () {
+  return { start: 0, end: 0, buffer: null }
+}
+
 const uint = exports.uint = {
   preencode (state, n) {
     state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
@@ -31,15 +35,6 @@ exports.int = {
   decode (state) {
     return zigzagDecode(uint.decode(state))
   }
-}
-
-function zigzagDecode (n) {
-  return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
-}
-
-function zigzagEncode (n) {
-  // 0, -1, 1, -2, 2, ...
-  return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
 }
 
 exports.buffer = {
@@ -332,4 +327,13 @@ function encode64 (state, n) {
   state.buffer[state.start++] = (r = (r >>> 8))
   state.buffer[state.start++] = (r = (r >>> 8))
   state.buffer[state.start++] = (r >>> 8)
+}
+
+function zigzagDecode (n) {
+  return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
+}
+
+function zigzagEncode (n) {
+  // 0, -1, 1, -2, 2, ...
+  return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
 }
