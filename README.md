@@ -64,7 +64,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.int` - Encodes an int using [compact-uint](https://github.com/mafintosh/compact-uint) as a signed int using ZigZag encoding.
 * `cenc.buffer` - Encodes a buffer with it's length uint prefixed. When decoding an empty buf, null is returned.
 * `cenc.raw` - Pass through encodes a buffer - ie a basic copy.
-* `cenc.uint32array` - Encodes a uint32array with it's length uint32 prefixed along with a 2 bit padding for alignment.
+* `cenc.uint32array` - Encodes a uint32array with it's element length uint32 prefixed.
 * `cenc.bool` - Encodes a boolean as 1 or 0.
 * `cenc.string` - Encodes a utf-8 string, similar to buffer.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.

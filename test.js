@@ -107,15 +107,15 @@ tape('uint32array', function (t) {
   const state = enc.state()
 
   enc.uint32array.preencode(state, new Uint32Array([1]))
-  t.same(state, { start: 0, end: 8, buffer: null })
+  t.same(state, { start: 0, end: 5, buffer: null })
   enc.uint32array.preencode(state, new Uint32Array([42, 43]))
-  t.same(state, { start: 0, end: 20, buffer: null })
+  t.same(state, { start: 0, end: 14, buffer: null })
 
   state.buffer = Buffer.alloc(state.end)
   enc.uint32array.encode(state, new Uint32Array([1]))
-  t.same(state, { start: 8, end: 20, buffer: Buffer.from([7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) })
+  t.same(state, { start: 5, end: 14, buffer: Buffer.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) })
   enc.uint32array.encode(state, new Uint32Array([42, 43]))
-  t.same(state, { start: 20, end: 20, buffer: Buffer.from([7, 0, 0, 0, 1, 0, 0, 0, 11, 0, 0, 0, 42, 0, 0, 0, 43, 0, 0, 0]) })
+  t.same(state, { start: 14, end: 14, buffer: Buffer.from([1, 1, 0, 0, 0, 2, 42, 0, 0, 0, 43, 0, 0, 0]) })
 
   state.start = 0
   t.same(enc.uint32array.decode(state), new Uint32Array([1]))
@@ -123,23 +123,6 @@ tape('uint32array', function (t) {
   t.same(state.start, state.end)
 
   t.throws(() => enc.uint32Array.decode(state))
-
-  // aligned
-  state.start = 0
-  const u = enc.uint32array.decode(state)
-  t.ok(u.buffer === state.buffer.buffer)
-
-  // unaligned
-  state.buffer = Buffer.concat([Buffer.from('.'), state.buffer])
-  state.start = 1
-
-  const a = enc.uint32array.decode(state)
-  const b = enc.uint32array.decode(state)
-
-  t.same(a, new Uint32Array([1]))
-  t.same(b, new Uint32Array([42, 43]))
-  t.ok(a.buffer !== state.buffer.buffer)
-  t.ok(b.buffer !== state.buffer.buffer)
 
   t.end()
 })

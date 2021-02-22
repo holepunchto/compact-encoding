@@ -81,26 +81,19 @@ const raw = exports.raw = {
 
 exports.uint32array = {
   preencode (state, b) {
-    uint.preencode(state, b.length << 2)
-    state.end += ((4 - (state.end & 3)) & 3)
+    uint.preencode(state, b.length)
     state.end += b.byteLength
   },
   encode (state, b) {
-    const s = state.start
-    uint.encode(state, b.length << 2)
-    const padding = (4 - (state.start & 3)) & 3
-    state.buffer[s + (state.buffer[s] <= 0xfc ? 0 : 1)] |= padding
-    for (let i = 0; i < padding; i++) state.buffer[state.start++] = 0
+    uint.encode(state, b.length)
     const view = new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
     if (BE) hostToLE32(view, b.length)
     state.buffer.set(view, state.start)
     state.start += b.byteLength
   },
   decode (state) {
-    const l = uint.decode(state)
-    const len = l >>> 2
+    const len = uint.decode(state)
 
-    state.start += (l & 3)
     const byteOffset = state.buffer.byteOffset + state.start
     const s = state.start
 
