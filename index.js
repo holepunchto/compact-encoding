@@ -37,6 +37,20 @@ exports.int = {
   }
 }
 
+exports.uint16 = {
+  preencode (state, n) {
+    state.end += 2
+  },
+  encode (state, n) {
+    state.buffer[state.start++] = n
+    state.buffer[state.start++] = n >>> 8
+  },
+  decode (state) {
+    if (state.end - state.start < 2) throw new Error('Out of bounds')
+    return state.buffer[state.start++] + state.buffer[state.start++] * 256
+  }
+}
+
 exports.buffer = {
   preencode (state, b) {
     if (b) {
@@ -177,9 +191,33 @@ exports.fixed64 = {
   }
 }
 
+exports.none = {
+  preencode (state, m) {
+    // do nothing
+  },
+  encode (state, m) {
+    // do nothing
+  },
+  decode (state) {
+    return null
+  }
+}
+
 exports.fixed = fixed
 exports.array = array
 exports.from = from
+
+exports.encode = function (enc, m) {
+  const state = { start: 0, end: 0, buffer: null }
+  enc.preencode(state, m)
+  state.buffer = Buffer.allocUnsafe(state.end)
+  enc.encode(state, m)
+  return state.buffer
+}
+
+exports.decode = function (enc, buffer) {
+  return enc.decode({ start: 0, end: buffer.byteLength, buffer })
+}
 
 function from (enc) {
   if (enc.preencode) return enc

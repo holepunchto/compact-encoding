@@ -55,6 +55,16 @@ Updates `state.start` to point after the encoded value when done.
 Decodes a value from `state.buffer` as position `state.start`.
 Updates `state.start` to point after the decoded value when done in the buffer.
 
+## Helpers
+
+If you are just encoding to a buffer or decoding from one you can use the `encode` and `decode` helpers
+to reduce your boilerplate
+
+``` js
+const buf = cenc.encode(cenc.bool, true)
+const bool = cenc.decode(cenc.bool, buf)
+```
+
 ## Bundled encodings
 
 The following encodings are bundled as they are primitives that can be used
@@ -62,6 +72,7 @@ to build others on top. Feel free to PR more that are missing.
 
 * `cenc.uint` - Encodes a uint using [compact-uint](https://github.com/mafintosh/compact-uint)
 * `cenc.int` - Encodes an int using [compact-uint](https://github.com/mafintosh/compact-uint) as a signed int using ZigZag encoding.
+* `cenc.uint16` - Encodes a fixed size uint16 (useful for things like ports)
 * `cenc.buffer` - Encodes a buffer with it's length uint prefixed. When decoding an empty buf, null is returned.
 * `cenc.raw` - Pass through encodes a buffer - ie a basic copy.
 * `cenc.uint32array` - Encodes a uint32array with it's element length uint32 prefixed.
