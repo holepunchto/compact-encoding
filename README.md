@@ -73,6 +73,8 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.uint` - Encodes a uint using [compact-uint](https://github.com/mafintosh/compact-uint)
 * `cenc.int` - Encodes an int using [compact-uint](https://github.com/mafintosh/compact-uint) as a signed int using ZigZag encoding.
 * `cenc.uint16` - Encodes a fixed size uint16 (useful for things like ports)
+* `cenc.uint24` - Encodes a fixed size uint24 (useful for message framing)
+* `cenc.uint32` - Encodes a fixes size uint32 (useful for very large message framing)
 * `cenc.buffer` - Encodes a buffer with it's length uint prefixed. When decoding an empty buf, null is returned.
 * `cenc.raw` - Pass through encodes a buffer - ie a basic copy.
 * `cenc.uint32array` - Encodes a uint32array with it's element length uint32 prefixed.

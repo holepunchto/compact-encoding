@@ -51,6 +51,21 @@ exports.uint16 = {
   }
 }
 
+exports.uint24 = {
+  preencode (state, n) {
+    state.end += 3
+  },
+  encode (state, n) {
+    state.buffer[state.start++] = n
+    state.buffer[state.start++] = n >>> 8
+    state.buffer[state.start++] = n >>> 16
+  },
+  decode (state) {
+    if (state.end - state.start < 3) throw new Error('Out of bounds')
+    return state.buffer[state.start++] + state.buffer[state.start++] * 256 + state.buffer[state.start++] * 65536
+  }
+}
+
 exports.uint32 = {
   preencode (state, n) {
     state.end += 4
