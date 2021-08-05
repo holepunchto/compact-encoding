@@ -54,6 +54,88 @@ tape('int', function (t) {
   t.end()
 })
 
+tape('float64', function (t) {
+  const state = enc.state()
+
+  enc.float64.preencode(state, 162.2377294)
+  t.same(state, { start: 0, end: 8, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  t.same(state, { start: 0, end: 8, buffer: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]) })
+  enc.float64.encode(state, 162.2377294)
+  t.same(state, { start: 8, end: 8, buffer: Buffer.from([0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]) })
+
+  state.start = 0
+  t.same(enc.float64.decode(state), 162.2377294)
+  t.same(state.start, state.end)
+
+  t.throws(() => enc.float64.decode(state))
+
+  // alignement
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.int.preencode(state, 0)
+  enc.float64.preencode(state, 162.2377294)
+  t.same(state, { start: 0, end: 9, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  t.same(state, { start: 0, end: 9, buffer: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0]) })
+  enc.int.encode(state, 0)
+  enc.float64.encode(state, 162.2377294)
+  t.same(state, { start: 9, end: 9, buffer: Buffer.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]) })
+
+  state.start = 0
+  t.same(enc.int.decode(state), 0)
+  t.same(enc.float64.decode(state), 162.2377294)
+  t.same(state.start, state.end)
+
+  // 0
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.float64.preencode(state, 162.2377294)
+  state.buffer = Buffer.alloc(state.end)
+  enc.float64.encode(state, 0)
+  t.same(state, { start: 8, end: 8, buffer: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]) })
+
+  state.start = 0
+  t.same(enc.float64.decode(state), 0)
+  t.same(state.start, state.end)
+
+  // Infinity
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.float64.preencode(state, Infinity)
+  state.buffer = Buffer.alloc(state.end)
+  enc.float64.encode(state, Infinity)
+  t.same(state, { start: 8, end: 8, buffer: Buffer.from([0, 0, 0, 0, 0, 0, 0xf0, 0x7f]) })
+
+  state.start = 0
+  t.same(enc.float64.decode(state), Infinity)
+  t.same(state.start, state.end)
+
+  // Edge cases
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.float64.preencode(state, 0.1 + 0.2)
+  state.buffer = Buffer.alloc(state.end)
+  enc.float64.encode(state, 0.1 + 0.2)
+  t.same(state, { start: 8, end: 8, buffer: Buffer.from([0x34, 0x33, 0x33, 0x33, 0x33, 0x33, 0xd3, 0x3f]) })
+
+  state.start = 0
+  t.same(enc.float64.decode(state), 0.1 + 0.2)
+  t.same(state.start, state.end)
+
+  t.end()
+})
+
 tape('buffer', function (t) {
   const state = enc.state()
 
