@@ -82,6 +82,24 @@ exports.uint32 = {
   }
 }
 
+exports.float = {
+  preencode (state, n) {
+    state.end += 8
+  },
+  encode (state, n) {
+    const float = new Float64Array([n])
+    const bytes = new Uint8Array(float.buffer)
+    state.buffer.set(bytes, state.start)
+    state.start += 8
+  },
+  decode (state) {
+    const float = new Float64Array(1)
+    const bytes = new Uint8Array(float.buffer)
+    bytes.set(state.buffer.subarray(state.start, state.start += 8))
+    return float[0]
+  }
+}
+
 exports.buffer = {
   preencode (state, b) {
     if (b) {
