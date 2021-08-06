@@ -91,6 +91,21 @@ tape('float64', function (t) {
   t.same(enc.float64.decode(state), 162.2377294)
   t.same(state.start, state.end)
 
+  // subarray
+  const buf = Buffer.alloc(10)
+  state.start = 0
+  state.buffer = buf.subarray(1)
+  t.same(state, { start: 0, end: 9, buffer: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0]) })
+  enc.int.encode(state, 0)
+  enc.float64.encode(state, 162.2377294)
+  t.same(state, { start: 9, end: 9, buffer: Buffer.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]) })
+  t.same(buf, Buffer.from([0, 0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]))
+
+  state.start = 0
+  t.same(enc.int.decode(state), 0)
+  t.same(enc.float64.decode(state), 162.2377294)
+  t.same(state.start, state.end)
+
   // 0
   state.start = 0
   state.end = 0

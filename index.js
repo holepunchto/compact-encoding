@@ -87,12 +87,12 @@ exports.float64 = {
     state.end += 8
   },
   encode (state, n) {
-    const view = new DataView(state.buffer.buffer, state.start, 8)
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     view.setFloat64(0, n, true) // little endian
     state.start += 8
   },
   decode (state) {
-    const view = new DataView(state.buffer.buffer, state.start, 8)
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     const float = view.getFloat64(0, true) // little endian
     state.start += 8
     return float
