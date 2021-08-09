@@ -82,6 +82,23 @@ exports.uint32 = {
   }
 }
 
+exports.float64 = {
+  preencode (state, n) {
+    state.end += 8
+  },
+  encode (state, n) {
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
+    view.setFloat64(0, n, true) // little endian
+    state.start += 8
+  },
+  decode (state) {
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
+    const float = view.getFloat64(0, true) // little endian
+    state.start += 8
+    return float
+  }
+}
+
 exports.buffer = {
   preencode (state, b) {
     if (b) {
