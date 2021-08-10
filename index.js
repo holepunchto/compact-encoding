@@ -16,7 +16,7 @@ const uint = exports.uint = {
     else encode64(state, n)
   },
   decode (state) {
-    if (state.start >= state.buffer.length) throw new Error('Out of bounds')
+    if (state.start >= state.end) throw new Error('Out of bounds')
     const a = state.buffer[state.start++]
     if (a <= 0xfc) return a
     if (a === 0xfd) return decode16(state)
@@ -366,7 +366,7 @@ function hostToLE32 (arr, len) {
 }
 
 function decode16 (state) {
-  if (state.start + 2 > state.buffer.length) throw new Error('Out of bounds')
+  if (state.start + 2 > state.end) throw new Error('Out of bounds')
   return state.buffer[state.start++] + 256 * state.buffer[state.start++]
 }
 
@@ -377,7 +377,7 @@ function encode16 (state, n) {
 }
 
 function decode32 (state) {
-  if (state.start + 4 > state.buffer.length) throw new Error('Out of bounds')
+  if (state.start + 4 > state.end) throw new Error('Out of bounds')
   return state.buffer[state.start++] + 256 * state.buffer[state.start++] +
     65536 * state.buffer[state.start++] + 16777216 * state.buffer[state.start++]
 }
@@ -391,7 +391,7 @@ function encode32 (state, n) {
 }
 
 function decode64 (state) {
-  if (state.start + 8 > state.buffer.length) throw new Error('Out of bounds')
+  if (state.start + 8 > state.end) throw new Error('Out of bounds')
   return decode32(state) + 4294967296 * decode32(state)
 }
 
