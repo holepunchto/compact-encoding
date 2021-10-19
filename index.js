@@ -417,29 +417,32 @@ function zigzagEncode (n) {
   return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
 }
 
-/**
- * https://datatracker.ietf.org/doc/html/rfc3629
- */
-function byteLength (string) {
-  let length = 0
+let byteLength
 
-  for (let i = 0, n = string.length; i < n; i++) {
-    const code = string.charCodeAt(i)
+if (typeof Buffer !== 'undefined') {
+  byteLength = Buffer.byteLength
+} else {
+  byteLength = (string) => {
+    let length = 0
 
-    if (code >= 0xd800 && code <= 0xdbff && i + 1 < n) {
-      const code = string.charCodeAt(i + 1)
+    for (let i = 0, n = string.length; i < n; i++) {
+      const code = string.charCodeAt(i)
 
-      if (code >= 0xdc00 && code <= 0xdfff) {
-        length += 4
-        i++
-        continue
+      if (code >= 0xd800 && code <= 0xdbff && i + 1 < n) {
+        const code = string.charCodeAt(i + 1)
+
+        if (code >= 0xdc00 && code <= 0xdfff) {
+          length += 4
+          i++
+          continue
+        }
       }
+
+      if (code <= 0x7f) length += 1
+      else if (code <= 0x7ff) length += 2
+      else length += 3
     }
 
-    if (code <= 0x7f) length += 1
-    else if (code <= 0x7ff) length += 2
-    else length += 3
+    return length
   }
-
-  return length
 }
