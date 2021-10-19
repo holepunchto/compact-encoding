@@ -176,6 +176,9 @@ exports.uint32array = {
   }
 }
 
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
+
 exports.string = {
   preencode (state, s) {
     const len = byteLength(s)
@@ -185,12 +188,13 @@ exports.string = {
   encode (state, s) {
     const len = byteLength(s)
     uint.encode(state, len)
-    state.buffer.write(s, state.start)
+    textEncoder.encodeInto(s, new Uint8Array(state.buffer.buffer, state.start, len))
     state.start += len
   },
   decode (state) {
     const len = uint.decode(state)
-    const s = state.buffer.toString('utf-8', state.start, state.start += len)
+    const s = textDecoder.decode(new Uint8Array(state.buffer.buffer, state.start, len))
+    state.start += len
     if (byteLength(s) !== len) throw new Error('Out of bounds')
     return s
   }
