@@ -227,19 +227,19 @@ tape('uint32array', function (t) {
 tape('string', function (t) {
   const state = enc.state()
 
-  enc.string.preencode(state, 'hi')
-  t.same(state, { start: 0, end: 3, buffer: null })
+  enc.string.preencode(state, '🌾')
+  t.same(state, { start: 0, end: 5, buffer: null })
   enc.string.preencode(state, 'høsten er fin')
-  t.same(state, { start: 0, end: 18, buffer: null })
+  t.same(state, { start: 0, end: 20, buffer: null })
 
   state.buffer = Buffer.alloc(state.end)
-  enc.string.encode(state, 'hi')
-  t.same(state, { start: 3, end: 18, buffer: Buffer.from('\x02hi\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') })
+  enc.string.encode(state, '🌾')
+  t.same(state, { start: 5, end: 20, buffer: Buffer.from('\x04🌾\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') })
   enc.string.encode(state, 'høsten er fin')
-  t.same(state, { start: 18, end: 18, buffer: Buffer.from('\x02hi\x0ehøsten er fin') })
+  t.same(state, { start: 20, end: 20, buffer: Buffer.from('\x04🌾\x0ehøsten er fin') })
 
   state.start = 0
-  t.same(enc.string.decode(state), 'hi')
+  t.same(enc.string.decode(state), '🌾')
   t.same(enc.string.decode(state), 'høsten er fin')
   t.same(state.start, state.end)
 

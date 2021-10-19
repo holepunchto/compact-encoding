@@ -176,14 +176,14 @@ exports.uint32array = {
   }
 }
 
-exports.string = { // TODO: un"Buffer" this one
+exports.string = {
   preencode (state, s) {
-    const len = Buffer.byteLength(s)
+    const len = byteLength(s)
     uint.preencode(state, len)
     state.end += len
   },
   encode (state, s) {
-    const len = Buffer.byteLength(s)
+    const len = byteLength(s)
     uint.encode(state, len)
     state.buffer.write(s, state.start)
     state.start += len
@@ -191,7 +191,7 @@ exports.string = { // TODO: un"Buffer" this one
   decode (state) {
     const len = uint.decode(state)
     const s = state.buffer.toString('utf-8', state.start, state.start += len)
-    if (Buffer.byteLength(s) !== len) throw new Error('Out of bounds')
+    if (byteLength(s) !== len) throw new Error('Out of bounds')
     return s
   }
 }
@@ -415,4 +415,22 @@ function zigzagDecode (n) {
 function zigzagEncode (n) {
   // 0, -1, 1, -2, 2, ...
   return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
+}
+
+/**
+ * https://datatracker.ietf.org/doc/html/rfc3629
+ */
+function byteLength (string) {
+  let length = 0
+
+  for (const char of string) {
+    const code = char.codePointAt(0)
+
+    if (code <= 0x7f) length += 1
+    else if (code <= 0x7ff) length += 2
+    else if (code <= 0xffff) length += 3
+    else length += 4
+  }
+
+  return length
 }
