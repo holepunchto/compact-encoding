@@ -1,3 +1,5 @@
+const b = require('b4a')
+
 const LE = (new Uint8Array(new Uint16Array([255]).buffer))[0] === 0xff
 const BE = !LE
 
@@ -176,24 +178,22 @@ exports.uint32array = {
   }
 }
 
-const textEncoder = new TextEncoder()
-const textDecoder = new TextDecoder()
-
 exports.string = {
   preencode (state, s) {
-    const len = byteLength(s)
+    const len = b.byteLength(s)
     uint.preencode(state, len)
     state.end += len
   },
   encode (state, s) {
-    const len = byteLength(s)
+    const len = b.byteLength(s)
     uint.encode(state, len)
-    textEncoder.encodeInto(s, state.buffer.subarray(state.start, state.start += len))
+    b.write(state.buffer, s, state.start)
+    state.start += len
   },
   decode (state) {
     const len = uint.decode(state)
-    const s = textDecoder.decode(state.buffer.subarray(state.start, state.start += len))
-    if (byteLength(s) !== len) throw new Error('Out of bounds')
+    const s = b.toString(state.buffer, 'utf8', state.start, state.start += len)
+    if (b.byteLength(s) !== len) throw new Error('Out of bounds')
     return s
   }
 }
@@ -417,34 +417,4 @@ function zigzagDecode (n) {
 function zigzagEncode (n) {
   // 0, -1, 1, -2, 2, ...
   return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
-}
-
-let byteLength
-
-if (typeof Buffer !== 'undefined') {
-  byteLength = Buffer.byteLength
-} else {
-  byteLength = (string) => {
-    let length = 0
-
-    for (let i = 0, n = string.length; i < n; i++) {
-      const code = string.charCodeAt(i)
-
-      if (code >= 0xd800 && code <= 0xdbff && i + 1 < n) {
-        const code = string.charCodeAt(i + 1)
-
-        if (code >= 0xdc00 && code <= 0xdfff) {
-          length += 4
-          i++
-          continue
-        }
-      }
-
-      if (code <= 0x7f) length += 1
-      else if (code <= 0x7ff) length += 2
-      else length += 3
-    }
-
-    return length
-  }
 }
