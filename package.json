@@ -3,7 +3,9 @@
   "version": "2.4.1",
   "description": "A series of compact encoding schemes for building small and fast parsers and serializers",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "b4a": "^1.0.0"
+  },
   "devDependencies": {
     "standard": "^16.0.3",
     "tape": "^5.1.1"

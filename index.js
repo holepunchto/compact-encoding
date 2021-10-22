@@ -1,3 +1,5 @@
+const b = require('b4a')
+
 const LE = (new Uint8Array(new Uint16Array([255]).buffer))[0] === 0xff
 const BE = !LE
 
@@ -176,22 +178,22 @@ exports.uint32array = {
   }
 }
 
-exports.string = { // TODO: un"Buffer" this one
+exports.string = {
   preencode (state, s) {
-    const len = Buffer.byteLength(s)
+    const len = b.byteLength(s)
     uint.preencode(state, len)
     state.end += len
   },
   encode (state, s) {
-    const len = Buffer.byteLength(s)
+    const len = b.byteLength(s)
     uint.encode(state, len)
-    state.buffer.write(s, state.start)
+    b.write(state.buffer, s, state.start)
     state.start += len
   },
   decode (state) {
     const len = uint.decode(state)
-    const s = state.buffer.toString('utf-8', state.start, state.start += len)
-    if (Buffer.byteLength(s) !== len) throw new Error('Out of bounds')
+    const s = b.toString(state.buffer, 'utf8', state.start, state.start += len)
+    if (b.byteLength(s) !== len) throw new Error('Out of bounds')
     return s
   }
 }
