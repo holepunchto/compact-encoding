@@ -40,6 +40,10 @@ Should be an object that looks like this `{ start, end, buffer }`.
 
 You can also get a blank state object using `cenc.state()`.
 
+* `start` is the byte offset to start encoding/decoding at.
+* `end` is the byte offset indicating the end of the buffer.
+* `buffer` should be either a Node.js Buffer or Uint8Array.
+
 #### `enc.preencode(state, val)`
 
 Does a fast preencode dry-run that only sets state.end.
