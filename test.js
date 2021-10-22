@@ -142,7 +142,7 @@ tape('float64', function (t) {
 
   state.start = 0
   t.is(enc.float64.decode(state), 0.1 + 0.2)
-  t.alike(state.start, state.end)
+  t.is(state.start, state.end)
 })
 
 tape('buffer', function (t) {
