@@ -260,7 +260,7 @@ exports.from = from
 exports.encode = function (enc, m) {
   const state = { start: 0, end: 0, buffer: null }
   enc.preencode(state, m)
-  state.buffer = Buffer.allocUnsafe(state.end)
+  state.buffer = b.allocUnsafe(state.end)
   enc.encode(state, m)
   return state.buffer
 }
