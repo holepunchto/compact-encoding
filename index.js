@@ -1,6 +1,6 @@
 const b = require('b4a')
 
-const LE = (new Uint8Array(new Uint16Array([255]).buffer))[0] === 0xff
+const LE = (new Uint8Array(new Uint16Array([0xff]).buffer))[0] === 0xff
 const BE = !LE
 
 exports.state = function () {
@@ -58,7 +58,7 @@ const uint16 = exports.uint16 = {
     if (state.end - state.start < 2) throw new Error('Out of bounds')
     return (
       state.buffer[state.start++] +
-      state.buffer[state.start++] * 256
+      state.buffer[state.start++] * 0x100
     )
   }
 }
@@ -76,8 +76,8 @@ const uint24 = exports.uint24 = {
     if (state.end - state.start < 3) throw new Error('Out of bounds')
     return (
       state.buffer[state.start++] +
-      state.buffer[state.start++] * 256 +
-      state.buffer[state.start++] * 65536
+      state.buffer[state.start++] * 0x100 +
+      state.buffer[state.start++] * 0x10000
     )
   }
 }
@@ -96,10 +96,55 @@ const uint32 = exports.uint32 = {
     if (state.end - state.start < 4) throw new Error('Out of bounds')
     return (
       state.buffer[state.start++] +
-      state.buffer[state.start++] * 256 +
-      state.buffer[state.start++] * 65536 +
-      state.buffer[state.start++] * 16777216
+      state.buffer[state.start++] * 0x100 +
+      state.buffer[state.start++] * 0x10000 +
+      state.buffer[state.start++] * 0x1000000
     )
+  }
+}
+
+const uint40 = exports.uint40 = {
+  preencode (state, n) {
+    state.end += 5
+  },
+  encode (state, n) {
+    const r = Math.floor(n / 0x100)
+    uint8.encode(state, n)
+    uint32.encode(state, r)
+  },
+  decode (state) {
+    if (state.end - state.start < 5) throw new Error('Out of bounds')
+    return uint8.decode(state) + 0x100 * uint32.decode(state)
+  }
+}
+
+const uint48 = exports.uint48 = {
+  preencode (state, n) {
+    state.end += 6
+  },
+  encode (state, n) {
+    const r = Math.floor(n / 0x10000)
+    uint16.encode(state, n)
+    uint32.encode(state, r)
+  },
+  decode (state) {
+    if (state.end - state.start < 6) throw new Error('Out of bounds')
+    return uint16.decode(state) + 0x10000 * uint32.decode(state)
+  }
+}
+
+const uint56 = exports.uint56 = {
+  preencode (state, n) {
+    state.end += 7
+  },
+  encode (state, n) {
+    const r = Math.floor(n / 0x1000000)
+    uint24.encode(state, n)
+    uint32.encode(state, r)
+  },
+  decode (state) {
+    if (state.end - state.start < 7) throw new Error('Out of bounds')
+    return uint24.decode(state) + 0x1000000 * uint32.decode(state)
   }
 }
 
@@ -108,13 +153,13 @@ const uint64 = exports.uint64 = {
     state.end += 8
   },
   encode (state, n) {
-    const r = Math.floor(n / 4294967296)
+    const r = Math.floor(n / 0x100000000)
     uint32.encode(state, n)
     uint32.encode(state, r)
   },
   decode (state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    return uint32.decode(state) + 4294967296 * uint32.decode(state)
+    return uint32.decode(state) + 0x100000000 * uint32.decode(state)
   }
 }
 
@@ -123,6 +168,9 @@ exports.int8 = zigZag(uint8)
 exports.int16 = zigZag(uint16)
 exports.int24 = zigZag(uint24)
 exports.int32 = zigZag(uint32)
+exports.int40 = zigZag(uint40)
+exports.int48 = zigZag(uint48)
+exports.int56 = zigZag(uint56)
 exports.int64 = zigZag(uint64)
 
 exports.float32 = {
@@ -315,7 +363,7 @@ exports.array = function array (enc) {
     },
     decode (state) {
       const len = uint.decode(state)
-      if (len > 1048576) throw new Error('Array is too big')
+      if (len > 0x100000) throw new Error('Array is too big')
       const arr = new Array(len)
       for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
       return arr

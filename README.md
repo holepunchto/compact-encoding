@@ -79,12 +79,18 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.uint16` - Encodes a fixed size uint16. Useful for things like ports.
 * `cenc.uint24` - Encodes a fixed size uint24. Useful for message framing.
 * `cenc.uint32` - Encodes a fixed size uint32. Useful for very large message framing.
+* `cenc.uint40` - Encodes a fixed size uint40.
+* `cenc.uint48` - Encodes a fixed size uint48.
+* `cenc.uint56` - Encodes a fixed size uint56.
 * `cenc.uint64` - Encodes a fixed size uint64.
 * `cenc.int` - Encodes an int using `cenc.uint` with ZigZag encoding.
 * `cenc.int8` - Encodes a fixed size int8 using `cenc.uint8` with ZigZag encoding.
 * `cenc.int16` - Encodes a fixed size int16 using `cenc.uint16` with ZigZag encoding.
 * `cenc.int24` - Encodes a fixed size int24 using `cenc.uint24` with ZigZag encoding.
 * `cenc.int32` - Encodes a fixed size int32 using `cenc.uint32` with ZigZag encoding.
+* `cenc.int40` - Encodes a fixed size int40 using `cenc.uint40` with ZigZag encoding.
+* `cenc.int48` - Encodes a fixed size int48 using `cenc.uint48` with ZigZag encoding.
+* `cenc.int56` - Encodes a fixed size int56 using `cenc.uint56` with ZigZag encoding.
 * `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
