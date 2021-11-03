@@ -209,7 +209,7 @@ tape('uint32array', function (t) {
   t.alike(enc.uint32array.decode(state), new Uint32Array([42, 43]))
   t.is(state.start, state.end)
 
-  t.exception(() => enc.uint32Array.decode(state))
+  t.exception(() => enc.uint32array.decode(state))
 })
 
 tape('string', function (t) {
