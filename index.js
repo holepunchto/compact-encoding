@@ -135,6 +135,7 @@ exports.float32 = {
     state.start += 4
   },
   decode (state) {
+    if (state.end - state.start < 4) throw new Error('Out of bounds')
     const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 4)
     const float = view.getFloat32(0, true) // little endian
     state.start += 4
@@ -152,6 +153,7 @@ exports.float64 = {
     state.start += 8
   },
   decode (state) {
+    if (state.end - state.start < 8) throw new Error('Out of bounds')
     const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     const float = view.getFloat64(0, true) // little endian
     state.start += 8
@@ -251,7 +253,7 @@ exports.string = {
   decode (state) {
     const len = uint.decode(state)
     const s = b.toString(state.buffer, 'utf8', state.start, state.start += len)
-    if (b.byteLength(s) !== len) throw new Error('Out of bounds')
+    if (b.byteLength(s) !== len || state.start > state.end) throw new Error('Out of bounds')
     return s
   }
 }
