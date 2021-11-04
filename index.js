@@ -164,17 +164,17 @@ exports.float64 = {
 exports.buffer = {
   preencode (state, b) {
     if (b) {
-      uint.preencode(state, b.length)
-      state.end += b.length
+      uint.preencode(state, b.byteLength)
+      state.end += b.byteLength
     } else {
       state.end++
     }
   },
   encode (state, b) {
     if (b) {
-      uint.encode(state, b.length)
+      uint.encode(state, b.byteLength)
       state.buffer.set(b, state.start)
-      state.start += b.length
+      state.start += b.byteLength
     } else {
       state.buffer[state.start++] = 0
     }
@@ -182,19 +182,20 @@ exports.buffer = {
   decode (state) {
     const len = uint.decode(state)
     if (len === 0) return null
-    const b = state.buffer.subarray(state.start, state.start += len)
-    if (b.length !== len) throw new Error('Out of bounds')
+    if (state.end - state.start < len) throw new Error('Out of bounds')
+    const b = state.buffer.subarray(state.start, state.start + len)
+    state.start += len
     return b
   }
 }
 
 const raw = exports.raw = {
   preencode (state, b) {
-    state.end += b.length
+    state.end += b.byteLength
   },
   encode (state, b) {
     state.buffer.set(b, state.start)
-    state.start += b.length
+    state.start += b.byteLength
   },
   decode (state) {
     const b = state.buffer.subarray(state.start, state.end)
@@ -252,8 +253,9 @@ exports.string = {
   },
   decode (state) {
     const len = uint.decode(state)
-    const s = b.toString(state.buffer, 'utf8', state.start, state.start += len)
-    if (b.byteLength(s) !== len || state.start > state.end) throw new Error('Out of bounds')
+    if (state.end - state.start < len) throw new Error('Out of bounds')
+    const s = b.toString(state.buffer, 'utf8', state.start, state.start + len)
+    state.start += len
     return s
   }
 }
@@ -281,8 +283,9 @@ const fixed = exports.fixed = function fixed (n) {
       state.start += n
     },
     decode (state) {
-      const b = state.buffer.subarray(state.start, state.start += n)
-      if (b.length !== n) throw new Error('Out of bounds')
+      if (state.end - state.start < n) throw new Error('Out of bounds')
+      const b = state.buffer.subarray(state.start, state.start + n)
+      state.start += n
       return b
     }
   }
@@ -337,7 +340,7 @@ function fromCodec (enc) {
     preencode (state, m) {
       tmpM = m
       tmpBuf = enc.encode(m)
-      state.end += tmpBuf.length
+      state.end += tmpBuf.byteLength
     },
     encode (state, m) {
       raw.encode(state, m === tmpM ? tmpBuf : enc.encode(m))

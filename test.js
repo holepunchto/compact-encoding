@@ -170,9 +170,6 @@ tape('buffer', function (t) {
   t.is(state.start, state.end)
 
   t.exception(() => enc.buffer.decode(state))
-  state.buffer = state.buffer.subarray(0, 8)
-  state.start = 3
-  t.exception(() => enc.buffer.decode(state), 'partial throws')
 })
 
 tape('raw', function (t) {
