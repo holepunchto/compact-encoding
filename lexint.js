@@ -26,6 +26,10 @@ function preencode (state, num) {
 function encode (state, num) {
   const max = 251
   const x = num - max
+
+  const { buffer, byteOffset } = state.buffer
+  const view = new DataView(buffer, byteOffset)
+
   if (num < max) {
     state.buffer[state.start++] = num
   } else if (num < 256) {
@@ -33,19 +37,17 @@ function encode (state, num) {
     state.buffer[state.start++] = x
   } else if (num < 0x10000) {
     state.buffer[state.start++] = max + 1
-    state.buffer[state.start++] = x >> 8
-    state.buffer[state.start++] = x & 0xff
+    view.setUint16(state.start, x)
+    state.start += 2
   } else if (num < 0x1000000) {
     state.buffer[state.start++] = max + 2
     state.buffer[state.start++] = x >> 16
-    state.buffer[state.start++] = (x >> 8) & 0xff
-    state.buffer[state.start++] = x & 0xff
+    view.setUint16(state.start, x & 0xffff)
+    state.start += 2
   } else if (num < 0x100000000) {
     state.buffer[state.start++] = max + 3
-    state.buffer[state.start++] = x >> 24
-    state.buffer[state.start++] = (x >> 16) & 0xff
-    state.buffer[state.start++] = (x >> 8) & 0xff
-    state.buffer[state.start++] = x & 0xff
+    view.setUint32(state.start, x)
+    state.start += 4
   } else {
     const exp = Math.floor(Math.log(x) / Math.log(2)) - 32
     state.buffer[state.start++] = 0xff
@@ -63,6 +65,9 @@ function decode (state, num) {
   const max = 251
   const flag = state.buffer[state.start++]
 
+  const { buffer, byteOffset } = state.buffer
+  const view = new DataView(buffer, byteOffset, state.byteLength)
+
   if (flag < max) return flag
 
   switch (flag) {
@@ -71,20 +76,20 @@ function decode (state, num) {
     }
 
     case 252: {
-      const x = state.buffer.readUInt16BE(state.start)
+      const x = view.getUint16(state.start)
       state.start += 2
       return x + max
     }
 
     case 253: {
       let x = state.buffer[state.start++] << 16
-      x += state.buffer.readUInt16BE(state.start)
+      x += view.getUint16(state.start)
       state.start += 2
       return x + max
     }
 
     case 254: {
-      const x = state.buffer.readUInt32BE(state.start)
+      const x = view.getUint32(state.start)
       state.start += 4
       return x + max
     }
