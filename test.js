@@ -325,3 +325,77 @@ tape('array', function (t) {
 
   t.exception(() => arr.decode(state))
 })
+
+tape('lexint: big numbers', function (t) {
+  t.plan(1)
+
+  let prev = enc.encode(enc.lexint, 0)
+
+  let n; let skip = 1
+  for (n = 1; n < Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.lexint, n)
+    if (Buffer.compare(cur, prev) < 1) break
+    prev = cur
+    skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
+  }
+  t.is(n, Infinity)
+})
+
+tape('lexint: range precision', function (t) {
+  t.plan(2)
+  const a = 1e55
+  const b = 1.0000000000001e55
+  const ha = enc.encode(enc.lexint, a).toString('hex')
+  const hb = enc.encode(enc.lexint, b).toString('hex')
+  t.not(a, b)
+  t.not(ha, hb)
+})
+
+tape('lexint: range precision', function (t) {
+  let prev = enc.encode(enc.lexint, 0)
+  const skip = 0.000000001e55
+  for (let i = 0, n = 1e55; i < 1000; n = 1e55 + skip * ++i) {
+    const cur = enc.encode(enc.lexint, n)
+    if (Buffer.compare(cur, prev) < 1) t.fail('cur <= prev')
+    prev = cur
+  }
+  t.ok(true)
+  t.end()
+})
+
+tape('lexint: small numbers', function (t) {
+  let prev = enc.encode(enc.lexint, 0)
+  for (let n = 1; n < 256 * 256 * 16; n++) {
+    const cur = enc.encode(enc.lexint, n)
+    if (Buffer.compare(cur, prev) < 1) t.fail('cur <= prev')
+    prev = cur
+  }
+  t.ok(true)
+  t.end()
+})
+
+tape('lexint: unpack', function (t) {
+  let n; let skip = 1
+  for (n = 1; n < Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.lexint, n)
+    compare(n, enc.decode(enc.lexint, cur))
+    skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
+  }
+  t.is(n, Infinity)
+  t.end()
+
+  function compare (a, b) {
+    const desc = a + ' !=~ ' + b
+    if (/e\+\d+$/.test(a) || /e\+\d+$/.test(b)) {
+      if (String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        /e\+(\d+)$/.exec(a)[1] !== /e\+(\d+)$/.exec(b)[1]) {
+        t.fail(desc)
+      }
+    } else {
+      if (String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+       String(a).length !== String(b).length) {
+        t.fail(desc)
+      }
+    }
+  }
+})

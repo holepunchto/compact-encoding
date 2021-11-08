@@ -86,6 +86,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.int24` - Encodes a fixed size int24 using `cenc.uint24` with ZigZag encoding.
 * `cenc.int32` - Encodes a fixed size int32 using `cenc.uint32` with ZigZag encoding.
 * `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
+* `cenc.lexint` - Encodes an int using [lexicographic-integer](https://github.com/suybstack/lexicographic-integer) encoding so that encoded values are lexicographically sorted in ascending numerical order.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
