@@ -28,7 +28,7 @@ function encode (state, num) {
   const x = num - max
 
   const { buffer, byteOffset } = state.buffer
-  const view = new DataView(buffer, byteOffset)
+  const view = new DataView(buffer, byteOffset, state.end - state.start)
 
   if (num < max) {
     state.buffer[state.start++] = num
@@ -66,7 +66,7 @@ function decode (state, num) {
   const flag = state.buffer[state.start++]
 
   const { buffer, byteOffset } = state.buffer
-  const view = new DataView(buffer, byteOffset, state.byteLength)
+  const view = new DataView(buffer, byteOffset, state.end - state.start)
 
   if (flag < max) return flag
 
