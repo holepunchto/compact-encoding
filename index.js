@@ -183,9 +183,7 @@ exports.buffer = {
     const len = uint.decode(state)
     if (len === 0) return null
     if (state.end - state.start < len) throw new Error('Out of bounds')
-    const b = state.buffer.subarray(state.start, state.start + len)
-    state.start += len
-    return b
+    return state.buffer.subarray(state.start, (state.start += len))
   }
 }
 
@@ -254,9 +252,7 @@ exports.string = {
   decode (state) {
     const len = uint.decode(state)
     if (state.end - state.start < len) throw new Error('Out of bounds')
-    const s = b.toString(state.buffer, 'utf8', state.start, state.start + len)
-    state.start += len
-    return s
+    return b.toString(state.buffer, 'utf8', state.start, (state.start += len))
   }
 }
 
@@ -284,9 +280,7 @@ const fixed = exports.fixed = function fixed (n) {
     },
     decode (state) {
       if (state.end - state.start < n) throw new Error('Out of bounds')
-      const b = state.buffer.subarray(state.start, state.start + n)
-      state.start += n
-      return b
+      return state.buffer.subarray(state.start, (state.start += n))
     }
   }
 }
