@@ -331,7 +331,9 @@ tape('lexint: big numbers', function (t) {
 
   let prev = enc.encode(enc.lexint, 0)
 
-  let n; let skip = 1
+  let n
+  let skip = 1
+
   for (n = 1; n < Number.MAX_VALUE; n += skip) {
     const cur = enc.encode(enc.lexint, n)
     if (Buffer.compare(cur, prev) < 1) break
@@ -375,7 +377,9 @@ tape('lexint: small numbers', function (t) {
 })
 
 tape('lexint: unpack', function (t) {
-  let n; let skip = 1
+  let n
+  let skip = 1
+
   for (n = 1; n < Number.MAX_VALUE; n += skip) {
     const cur = enc.encode(enc.lexint, n)
     compare(n, enc.decode(enc.lexint, cur))

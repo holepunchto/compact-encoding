@@ -27,9 +27,6 @@ function encode (state, num) {
   const max = 251
   const x = num - max
 
-  const { buffer, byteOffset } = state.buffer
-  const view = new DataView(buffer, byteOffset, state.end - state.start)
-
   if (num < max) {
     state.buffer[state.start++] = num
   } else if (num < 256) {
@@ -37,18 +34,21 @@ function encode (state, num) {
     state.buffer[state.start++] = x
   } else if (num < 0x10000) {
     state.buffer[state.start++] = max + 1
-    view.setUint16(state.start, x)
-    state.start += 2
+    state.buffer[state.start++] = x >> 8 & 0xff
+    state.buffer[state.start++] = x & 0xff
   } else if (num < 0x1000000) {
     state.buffer[state.start++] = max + 2
     state.buffer[state.start++] = x >> 16
-    view.setUint16(state.start, x & 0xffff)
-    state.start += 2
+    state.buffer[state.start++] = x >> 8 & 0xff
+    state.buffer[state.start++] = x & 0xff
   } else if (num < 0x100000000) {
     state.buffer[state.start++] = max + 3
-    view.setUint32(state.start, x)
-    state.start += 4
+    state.buffer[state.start++] = x >> 24
+    state.buffer[state.start++] = x >> 16 & 0xff
+    state.buffer[state.start++] = x >> 8 & 0xff
+    state.buffer[state.start++] = x & 0xff
   } else {
+    // need to use Math here as bitwise ops are 32 bit
     const exp = Math.floor(Math.log(x) / Math.log(2)) - 32
     state.buffer[state.start++] = 0xff
 
@@ -61,48 +61,45 @@ function encode (state, num) {
   }
 }
 
-function decode (state, num) {
+function decode (state) {
   const max = 251
   const flag = state.buffer[state.start++]
 
-  const { buffer, byteOffset, byteLength } = state.buffer
-  const view = new DataView(buffer, byteOffset, byteLength)
-
   if (flag < max) return flag
 
-  switch (flag) {
-    case 251: {
-      return state.buffer[state.start++] + max
-    }
-
-    case 252: {
-      const x = view.getUint16(state.start)
-      state.start += 2
-      return x + max
-    }
-
-    case 253: {
-      let x = state.buffer[state.start++] << 16
-      x += view.getUint16(state.start)
-      state.start += 2
-      return x + max
-    }
-
-    case 254: {
-      const x = view.getUint32(state.start)
-      state.start += 4
-      return x + max
-    }
-
-    case 255: {
-      const exp = decode(state)
-
-      let rem = 0
-      for (let i = 5; i >= 0; i--) {
-        rem += state.buffer[state.start++] * Math.pow(2, 8 * i)
-      }
-
-      return (rem * Math.pow(2, exp - 11)) + max
-    }
+  if (flag < 252) {
+    return state.buffer[state.start++] +
+      max
   }
+
+  if (flag < 253) {
+    return (state.buffer[state.start++] << 8) +
+      state.buffer[state.start++] +
+      max
+  }
+
+  if (flag < 254) {
+    return (state.buffer[state.start++] << 16) +
+      (state.buffer[state.start++] << 8) +
+      state.buffer[state.start++] +
+      max
+  }
+
+  // << 24 result may be interpreted as negative
+  if (flag < 255) {
+    return (state.buffer[state.start++] * 0x1000000) +
+      (state.buffer[state.start++] << 16) +
+      (state.buffer[state.start++] << 8) +
+      state.buffer[state.start++] +
+      max
+  }
+
+  const exp = decode(state)
+
+  let rem = 0
+  for (let i = 5; i >= 0; i--) {
+    rem += state.buffer[state.start++] * Math.pow(2, 8 * i)
+  }
+
+  return (rem * Math.pow(2, exp - 11)) + max
 }
