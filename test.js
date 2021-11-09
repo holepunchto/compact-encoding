@@ -376,6 +376,85 @@ tape('lexint: small numbers', function (t) {
   t.end()
 })
 
+tape('lexint: throws', function (t) {
+  let num = 252
+
+  const state = {
+    start: 0,
+    end: 0,
+    buffer: null
+  }
+
+  enc.lexint.preencode(state, num)
+  state.buffer = Buffer.alloc(state.end - state.start)
+  enc.lexint.encode(state, num)
+  console.log(state.buffer)
+
+  t.exception(() => {
+    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+  })
+
+  num <<= 8
+  console.log(num)
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.lexint.preencode(state, num)
+  state.buffer = Buffer.alloc(state.end - state.start)
+  enc.lexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+  })
+
+  num <<= 8
+  console.log(num)
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.lexint.preencode(state, num)
+  state.buffer = Buffer.alloc(state.end - state.start)
+  enc.lexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+  })
+
+  num *= 256
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.lexint.preencode(state, num)
+  state.buffer = Buffer.alloc(state.end - state.start)
+  enc.lexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+  })
+
+  num *= 256 * 256
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.lexint.preencode(state, num)
+  state.buffer = Buffer.alloc(state.end - state.start)
+  enc.lexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+  })
+
+  t.end()
+})
+
 tape('lexint: unpack', function (t) {
   let n
   let skip = 1
