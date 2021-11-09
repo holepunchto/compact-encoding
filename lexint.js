@@ -68,7 +68,7 @@ function decode (state) {
 
   if (flag != null && flag < max) return flag
 
-  if (!flag || state.end < state.start + flag - max) {
+  if (!flag || state.end - state.start < flag - max) {
     throw new Error('Out of bounds.')
   }
 
@@ -101,7 +101,7 @@ function decode (state) {
 
   const exp = decode(state)
 
-  if (state.end < state.start + 6) throw new Error('Out of bounds')
+  if (state.end - state.start < 6) throw new Error('Out of bounds')
 
   let rem = 0
   for (let i = 5; i >= 0; i--) {
