@@ -65,8 +65,8 @@ function decode (state, num) {
   const max = 251
   const flag = state.buffer[state.start++]
 
-  const { buffer, byteOffset } = state.buffer
-  const view = new DataView(buffer, byteOffset, state.end - state.start)
+  const { buffer, byteOffset, byteLength } = state.buffer
+  const view = new DataView(buffer, byteOffset, byteLength)
 
   if (flag < max) return flag
 
