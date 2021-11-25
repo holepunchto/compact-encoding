@@ -90,7 +90,12 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
 * `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
-* `cenc.uint32array` - Encodes a uint32array with its element length uint32 prefixed.
+* `cenc.uint8array` - Encodes a uint8array with its element length uint prefixed.
+* `cenc.uint16array` - Encodes a uint16array with its element length uint prefixed.
+* `cenc.uint32array` - Encodes a uint32array with its element length uint prefixed.
+* `cenc.int8array` - Encodes a int8array with its element length uint prefixed.
+* `cenc.int16array` - Encodes a int16array with its element length uint prefixed.
+* `cenc.int32array` - Encodes a int32array with its element length uint prefixed.
 * `cenc.bool` - Encodes a boolean as 1 or 0.
 * `cenc.string` - Encodes a utf-8 string, similar to buffer.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.

@@ -190,6 +190,23 @@ tape('raw', function (t) {
   t.is(state.start, state.end)
 })
 
+tape('uint16array', function (t) {
+  const state = enc.state()
+
+  enc.uint16array.preencode(state, new Uint16Array([1, 2, 3]))
+  t.alike(state, { start: 0, end: 7, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.uint16array.encode(state, new Uint16Array([1, 2, 3]))
+  t.alike(state, { start: 7, end: 7, buffer: Buffer.from([3, 1, 0, 2, 0, 3, 0]) })
+
+  state.start = 0
+  t.alike(enc.uint16array.decode(state), new Uint16Array([1, 2, 3]))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.uint16array.decode(state))
+})
+
 tape('uint32array', function (t) {
   const state = enc.state()
 
@@ -210,6 +227,42 @@ tape('uint32array', function (t) {
   t.is(state.start, state.end)
 
   t.exception(() => enc.uint32array.decode(state))
+})
+
+tape('int16array', function (t) {
+  const state = enc.state()
+
+  enc.int16array.preencode(state, new Int16Array([1, -2, 3]))
+  t.alike(state, { start: 0, end: 7, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.int16array.encode(state, new Int16Array([1, -2, 3]))
+  console.log(state.buffer)
+  t.alike(state, { start: 7, end: 7, buffer: Buffer.from([3, 1, 0, 0xfe, 0xff, 3, 0]) })
+
+  state.start = 0
+  t.alike(enc.int16array.decode(state), new Int16Array([1, -2, 3]))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.int16array.decode(state))
+})
+
+tape('int32array', function (t) {
+  const state = enc.state()
+
+  enc.int32array.preencode(state, new Int32Array([1, -2, 3]))
+  t.alike(state, { start: 0, end: 13, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.int32array.encode(state, new Int32Array([1, -2, 3]))
+  console.log(state.buffer)
+  t.alike(state, { start: 13, end: 13, buffer: Buffer.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0]) })
+
+  state.start = 0
+  t.alike(enc.int32array.decode(state), new Int32Array([1, -2, 3]))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.int16array.decode(state))
 })
 
 tape('string', function (t) {
