@@ -234,6 +234,9 @@ exports.int8array = typedarray(Int8Array)
 exports.int16array = typedarray(Int16Array, b4a.swap16)
 exports.int32array = typedarray(Int32Array, b4a.swap32)
 
+exports.float32array = typedarray(Float32Array, b4a.swap32)
+exports.float64array = typedarray(Float64Array, b4a.swap64)
+
 exports.string = {
   preencode (state, s) {
     const len = b4a.byteLength(s)

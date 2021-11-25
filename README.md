@@ -96,6 +96,8 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.int8array` - Encodes a int8array with its element length uint prefixed.
 * `cenc.int16array` - Encodes a int16array with its element length uint prefixed.
 * `cenc.int32array` - Encodes a int32array with its element length uint prefixed.
+* `cenc.float32array` - Encodes a float32array with its element length uint prefixed.
+* `cenc.float64array` - Encodes a float64array with its element length uint prefixed.
 * `cenc.bool` - Encodes a boolean as 1 or 0.
 * `cenc.string` - Encodes a utf-8 string, similar to buffer.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.

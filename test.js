@@ -237,7 +237,6 @@ tape('int16array', function (t) {
 
   state.buffer = Buffer.alloc(state.end)
   enc.int16array.encode(state, new Int16Array([1, -2, 3]))
-  console.log(state.buffer)
   t.alike(state, { start: 7, end: 7, buffer: Buffer.from([3, 1, 0, 0xfe, 0xff, 3, 0]) })
 
   state.start = 0
@@ -255,14 +254,47 @@ tape('int32array', function (t) {
 
   state.buffer = Buffer.alloc(state.end)
   enc.int32array.encode(state, new Int32Array([1, -2, 3]))
-  console.log(state.buffer)
   t.alike(state, { start: 13, end: 13, buffer: Buffer.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0]) })
 
   state.start = 0
   t.alike(enc.int32array.decode(state), new Int32Array([1, -2, 3]))
   t.is(state.start, state.end)
 
-  t.exception(() => enc.int16array.decode(state))
+  t.exception(() => enc.int32array.decode(state))
+})
+
+tape('float32array', function (t) {
+  const state = enc.state()
+
+  enc.float32array.preencode(state, new Float32Array([1.1, -2.2, 3.3]))
+  t.alike(state, { start: 0, end: 13, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.float32array.encode(state, new Float32Array([1.1, -2.2, 3.3]))
+  t.alike(state, { start: 13, end: 13, buffer: Buffer.from([3, 0xcd, 0xcc, 0x8c, 0x3f, 0xcd, 0xcc, 0x0c, 0xc0, 0x33, 0x33, 0x53, 0x40]) })
+
+  state.start = 0
+  t.alike(enc.float32array.decode(state), new Float32Array([1.1, -2.2, 3.3]))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.float32array.decode(state))
+})
+
+tape('float64array', function (t) {
+  const state = enc.state()
+
+  enc.float64array.preencode(state, new Float64Array([1.1, -2.2, 3.3]))
+  t.alike(state, { start: 0, end: 25, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.float64array.encode(state, new Float64Array([1.1, -2.2, 3.3]))
+  t.alike(state, { start: 25, end: 25, buffer: Buffer.from([3, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0xf1, 0x3f, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x01, 0xc0, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0a, 0x40]) })
+
+  state.start = 0
+  t.alike(enc.float64array.decode(state), new Float64Array([1.1, -2.2, 3.3]))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.float64array.decode(state))
 })
 
 tape('string', function (t) {
