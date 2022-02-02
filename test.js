@@ -377,6 +377,10 @@ tape('lexint: small numbers', function (t) {
 })
 
 tape('lexint: throws', function (t) {
+  t.exception(() => {
+    enc.decode(enc.lexint, Buffer.alloc(1, 251))
+  })
+
   let num = 252
 
   const state = {
