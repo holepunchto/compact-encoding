@@ -217,7 +217,7 @@ function typedarray (TypedArray, swap) {
 
       let b = state.buffer.subarray(state.start, state.start += len * n)
       if (b.byteLength !== len * n) throw new Error('Out of bounds')
-      if (b.byteOffset % n !== 0) b = new Uint8Array(b)
+      if ((b.byteOffset % n) !== 0) b = new Uint8Array(b)
 
       if (BE && swap) swap(b)
 
@@ -251,7 +251,7 @@ exports.string = {
   },
   decode (state) {
     const len = uint.decode(state)
-    const s = b4a.toString(state.buffer, 'utf8', state.start, state.start += len)
+    const s = b4a.toString(state.buffer, 'utf-8', state.start, state.start += len)
     if (b4a.byteLength(s) !== len || state.start > state.end) throw new Error('Out of bounds')
     return s
   }
