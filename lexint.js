@@ -68,9 +68,9 @@ function decode (state) {
 
   const flag = state.buffer[state.start++]
 
-  if (flag != null && flag < max) return flag
+  if (flag < max) return flag
 
-  if (!flag || state.end - state.start < flag - max + 1) {
+  if (state.end - state.start < flag - max + 1) {
     throw new Error('Out of bounds.')
   }
 
