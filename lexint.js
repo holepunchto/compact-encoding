@@ -70,7 +70,7 @@ function decode (state) {
 
   if (flag != null && flag < max) return flag
 
-  if (!flag || state.end - state.start < flag - max) {
+  if (!flag || state.end - state.start < flag - max + 1) {
     throw new Error('Out of bounds.')
   }
 
