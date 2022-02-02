@@ -251,7 +251,7 @@ exports.string = {
   decode (state) {
     const len = uint.decode(state)
     if (state.end - state.start < len) throw new Error('Out of bounds')
-    return b4a.toString(b, state.buffer, 'utf-8', state.start, state.start += len)
+    return b4a.toString(state.buffer, 'utf-8', state.start, (state.start += len))
   }
 }
 
