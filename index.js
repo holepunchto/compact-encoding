@@ -1,4 +1,4 @@
-const b = require('b4a')
+const b4a = require('b4a')
 
 const LE = (new Uint8Array(new Uint16Array([255]).buffer))[0] === 0xff
 const BE = !LE
@@ -163,21 +163,12 @@ exports.float64 = {
 
 exports.buffer = {
   preencode (state, b) {
-    if (b) {
-      uint.preencode(state, b.byteLength)
-      state.end += b.byteLength
-    } else {
-      state.end++
-    }
+    if (b) uint8array.preencode(state, b)
+    else state.end++
   },
   encode (state, b) {
-    if (b) {
-      uint.encode(state, b.byteLength)
-      state.buffer.set(b, state.start)
-      state.start += b.byteLength
-    } else {
-      state.buffer[state.start++] = 0
-    }
+    if (b) uint8array.encode(state, b)
+    else state.buffer[state.start++] = 0
   },
   decode (state) {
     const len = uint.decode(state)
@@ -202,57 +193,65 @@ const raw = exports.raw = {
   }
 }
 
-exports.uint32array = {
-  preencode (state, b) {
-    uint.preencode(state, b.length)
-    state.end += b.byteLength
-  },
-  encode (state, b) {
-    uint.encode(state, b.length)
-    const view = new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
-    if (BE) hostToLE32(view, b.length)
-    state.buffer.set(view, state.start)
-    state.start += b.byteLength
-  },
-  decode (state) {
-    const len = uint.decode(state)
+function typedarray (TypedArray, swap) {
+  const n = TypedArray.BYTES_PER_ELEMENT
 
-    const byteOffset = state.buffer.byteOffset + state.start
-    const s = state.start
+  return {
+    preencode (state, b) {
+      uint.preencode(state, b.length)
+      state.end += b.byteLength
+    },
+    encode (state, b) {
+      uint.encode(state, b.length)
 
-    state.start += len * 4
+      const view = new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
 
-    if ((byteOffset & 3) === 0) {
-      const arr = new Uint32Array(state.buffer.buffer, byteOffset, len)
-      if (BE) LEToHost32(arr, len)
-      return arr
+      if (BE && swap) swap(view)
+
+      state.buffer.set(view, state.start)
+      state.start += b.byteLength
+    },
+    decode (state) {
+      const len = uint.decode(state)
+
+      let b = state.buffer.subarray(state.start, state.start += len * n)
+      if (b.byteLength !== len * n) throw new Error('Out of bounds')
+      if ((b.byteOffset % n) !== 0) b = new Uint8Array(b)
+
+      if (BE && swap) swap(b)
+
+      return new TypedArray(b.buffer, b.byteOffset, b.byteLength / n)
     }
-
-    // align mismatch
-    const copy = new Uint8Array(len * 4)
-    const arr = new Uint32Array(copy.buffer, copy.byteOffset, len)
-    copy.set(state.buffer.subarray(s, state.start), 0)
-    if (BE) LEToHost32(arr, len)
-    return arr
   }
 }
 
+const uint8array = exports.uint8array = typedarray(Uint8Array)
+exports.uint16array = typedarray(Uint16Array, b4a.swap16)
+exports.uint32array = typedarray(Uint32Array, b4a.swap32)
+
+exports.int8array = typedarray(Int8Array)
+exports.int16array = typedarray(Int16Array, b4a.swap16)
+exports.int32array = typedarray(Int32Array, b4a.swap32)
+
+exports.float32array = typedarray(Float32Array, b4a.swap32)
+exports.float64array = typedarray(Float64Array, b4a.swap64)
+
 exports.string = {
   preencode (state, s) {
-    const len = b.byteLength(s)
+    const len = b4a.byteLength(s)
     uint.preencode(state, len)
     state.end += len
   },
   encode (state, s) {
-    const len = b.byteLength(s)
+    const len = b4a.byteLength(s)
     uint.encode(state, len)
-    b.write(state.buffer, s, state.start)
+    b4a.write(state.buffer, s, state.start)
     state.start += len
   },
   decode (state) {
     const len = uint.decode(state)
     if (state.end - state.start < len) throw new Error('Out of bounds')
-    return b.toString(state.buffer, 'utf8', state.start, (state.start += len))
+    return b4a.toString(b, state.buffer, 'utf-8', state.start, state.start += len)
   }
 }
 
@@ -366,31 +365,13 @@ function fromAbstractEncoder (enc) {
 exports.encode = function encode (enc, m) {
   const state = { start: 0, end: 0, buffer: null }
   enc.preencode(state, m)
-  state.buffer = b.allocUnsafe(state.end)
+  state.buffer = b4a.allocUnsafe(state.end)
   enc.encode(state, m)
   return state.buffer
 }
 
 exports.decode = function decode (enc, buffer) {
   return enc.decode({ start: 0, end: buffer.byteLength, buffer })
-}
-
-function LEToHost32 (arr, len) {
-  const view = new DataView(arr.buffer, arr.byteOffset)
-  const host = new Uint32Array(arr.buffer, arr.byteOffset, len)
-
-  for (let i = 0; i < host.length; i++) {
-    host[i] = view.getUint32(4 * i, BE)
-  }
-}
-
-function hostToLE32 (arr, len) {
-  const view = new DataView(arr.buffer, arr.byteOffset)
-  const host = new Uint32Array(arr.buffer, arr.byteOffset, len)
-
-  for (let i = 0; i < host.length; i++) {
-    view.setUint32(4 * i, host[i], BE)
-  }
 }
 
 function zigZag (enc) {
