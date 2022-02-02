@@ -64,7 +64,7 @@ function encode (state, num) {
 function decode (state) {
   const max = 251
 
-  if (state.end === state.start) throw new Error('Out of bounds')
+  if (state.end - state.start < 1) throw new Error('Out of bounds')
 
   const flag = state.buffer[state.start++]
 
