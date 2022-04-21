@@ -408,6 +408,29 @@ tape('array', function (t) {
   t.exception(() => arr.decode(state))
 })
 
+tape('json', function (t) {
+  const state = enc.state()
+
+  enc.json.preencode(state, { a: 1, b: 2 })
+  t.alike(state, { start: 0, end: 14, buffer: null })
+
+  state.buffer = Buffer.alloc(state.end)
+  enc.json.encode(state, { a: 1, b: 2 })
+  t.alike(state, {
+    start: 14,
+    end: 14,
+    buffer: Buffer.concat([
+      Buffer.from([13]),
+      Buffer.from('{"a":1,"b":2}')
+    ])
+  })
+
+  state.start = 0
+  t.alike(enc.json.decode(state), { a: 1, b: 2 })
+
+  t.exception(() => enc.json.decode(state))
+})
+
 tape('lexint: big numbers', function (t) {
   t.plan(1)
 

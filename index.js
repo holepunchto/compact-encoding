@@ -286,7 +286,7 @@ exports.int32array = typedarray(Int32Array, b4a.swap32)
 exports.float32array = typedarray(Float32Array, b4a.swap32)
 exports.float64array = typedarray(Float64Array, b4a.swap64)
 
-exports.string = {
+const string = exports.string = {
   preencode (state, s) {
     const len = b4a.byteLength(s)
     uint.preencode(state, len)
@@ -366,6 +366,30 @@ exports.array = function array (enc) {
       for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
       return arr
     }
+  }
+}
+
+exports.json = {
+  preencode (state, v) {
+    string.preencode(state, JSON.stringify(v))
+  },
+  encode (state, v) {
+    string.encode(state, JSON.stringify(v))
+  },
+  decode (state) {
+    return JSON.parse(string.decode(state))
+  }
+}
+
+exports.ndjson = {
+  preencode (state, v) {
+    string.preencode(state, JSON.stringify(v) + '\n')
+  },
+  encode (state, v) {
+    string.encode(state, JSON.stringify(v) + '\n')
+  },
+  decode (state) {
+    return JSON.parse(string.decode(state))
   }
 }
 
