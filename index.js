@@ -125,6 +125,8 @@ exports.int24 = zigZag(uint24)
 exports.int32 = zigZag(uint32)
 exports.int64 = zigZag(uint64)
 
+exports.lexint = require('./lexint')
+
 exports.float32 = {
   preencode (state, n) {
     state.end += 4
