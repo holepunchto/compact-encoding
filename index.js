@@ -286,24 +286,32 @@ exports.int32array = typedarray(Int32Array, b4a.swap32)
 exports.float32array = typedarray(Float32Array, b4a.swap32)
 exports.float64array = typedarray(Float64Array, b4a.swap64)
 
-exports.string = {
-  preencode (state, s) {
-    const len = b4a.byteLength(s)
-    uint.preencode(state, len)
-    state.end += len
-  },
-  encode (state, s) {
-    const len = b4a.byteLength(s)
-    uint.encode(state, len)
-    b4a.write(state.buffer, s, state.start)
-    state.start += len
-  },
-  decode (state) {
-    const len = uint.decode(state)
-    if (state.end - state.start < len) throw new Error('Out of bounds')
-    return b4a.toString(state.buffer, 'utf-8', state.start, (state.start += len))
+function string (encoding) {
+  return {
+    preencode (state, s) {
+      const len = b4a.byteLength(s, encoding)
+      uint.preencode(state, len)
+      state.end += len
+    },
+    encode (state, s) {
+      const len = b4a.byteLength(s, encoding)
+      uint.encode(state, len)
+      b4a.write(state.buffer, s, state.start, encoding)
+      state.start += len
+    },
+    decode (state) {
+      const len = uint.decode(state)
+      if (state.end - state.start < len) throw new Error('Out of bounds')
+      return b4a.toString(state.buffer, encoding, state.start, (state.start += len))
+    }
   }
 }
+
+exports.string = exports.utf8 = string('utf-8')
+exports.ascii = string('ascii')
+exports.hex = string('hex')
+exports.base64 = string('base64')
+exports.ucs2 = exports.utf16le = string('utf16le')
 
 exports.bool = {
   preencode (state, b) {
