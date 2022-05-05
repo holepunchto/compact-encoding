@@ -106,7 +106,11 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.float32array` - Encodes a float32array with its element length uint prefixed.
 * `cenc.float64array` - Encodes a float64array with its element length uint prefixed.
 * `cenc.bool` - Encodes a boolean as 1 or 0.
-* `cenc.string` - Encodes a utf-8 string, similar to buffer.
+* `cenc.string`, `cenc.utf8` - Encodes a utf-8 string, similar to buffer.
+* `cenc.ascii` - Encodes an ascii string.
+* `cenc.hex` - Encodes a hex string.
+* `cenc.base64` - Encodes a base64 string.
+* `cenc.utf16le`, `cenc.ucs2` - Encodes a utf16le string.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.
 * `cenc.fixed64` - Encodes a fixed 64 byte buffer.
 * `cenc.fixed(n)` - Makes a fixed sized encoder.
