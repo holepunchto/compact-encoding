@@ -307,7 +307,7 @@ function string (encoding) {
   }
 }
 
-const string = exports.string = exports.utf8 = string('utf-8')
+const utf8 = exports.string = exports.utf8 = string('utf-8')
 exports.ascii = string('ascii')
 exports.hex = string('hex')
 exports.base64 = string('base64')
@@ -379,25 +379,25 @@ exports.array = function array (enc) {
 
 exports.json = {
   preencode (state, v) {
-    string.preencode(state, JSON.stringify(v))
+    utf8.preencode(state, JSON.stringify(v))
   },
   encode (state, v) {
-    string.encode(state, JSON.stringify(v))
+    utf8.encode(state, JSON.stringify(v))
   },
   decode (state) {
-    return JSON.parse(string.decode(state))
+    return JSON.parse(utf8.decode(state))
   }
 }
 
 exports.ndjson = {
   preencode (state, v) {
-    string.preencode(state, JSON.stringify(v) + '\n')
+    utf8.preencode(state, JSON.stringify(v) + '\n')
   },
   encode (state, v) {
-    string.encode(state, JSON.stringify(v) + '\n')
+    utf8.encode(state, JSON.stringify(v) + '\n')
   },
   decode (state) {
-    return JSON.parse(string.decode(state))
+    return JSON.parse(utf8.decode(state))
   }
 }
 
