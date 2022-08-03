@@ -303,6 +303,21 @@ function string (encoding) {
       const len = uint.decode(state)
       if (state.end - state.start < len) throw new Error('Out of bounds')
       return b4a.toString(state.buffer, encoding, state.start, (state.start += len))
+    },
+    fixed (n) {
+      return {
+        preencode (state) {
+          state.end += n
+        },
+        encode (state, s) {
+          b4a.write(state.buffer, s, state.start, n, encoding)
+          state.start += n
+        },
+        decode (state) {
+          if (state.end - state.start < n) throw new Error('Out of bounds')
+          return b4a.toString(state.buffer, encoding, state.start, (state.start += n))
+        }
+      }
     }
   }
 }
