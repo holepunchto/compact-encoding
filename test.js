@@ -1,8 +1,8 @@
 const enc = require('./')
-const tape = require('brittle')
+const test = require('brittle')
 const b4a = require('b4a')
 
-tape('uint', function (t) {
+test('uint', function (t) {
   const state = enc.state()
 
   enc.uint.preencode(state, 42)
@@ -29,7 +29,7 @@ tape('uint', function (t) {
   t.exception(() => enc.uint.decode(state))
 })
 
-tape('int', function (t) {
+test('int', function (t) {
   const state = enc.state()
 
   enc.int.preencode(state, 42)
@@ -51,7 +51,7 @@ tape('int', function (t) {
   t.exception(() => enc.int.decode(state))
 })
 
-tape('float64', function (t) {
+test('float64', function (t) {
   const state = enc.state()
 
   enc.float64.preencode(state, 162.2377294)
@@ -146,7 +146,7 @@ tape('float64', function (t) {
   t.is(state.start, state.end)
 })
 
-tape('buffer', function (t) {
+test('buffer', function (t) {
   const state = enc.state()
 
   enc.buffer.preencode(state, b4a.from('hi'))
@@ -173,7 +173,7 @@ tape('buffer', function (t) {
   t.exception(() => enc.buffer.decode(state))
 })
 
-tape('raw', function (t) {
+test('raw', function (t) {
   const state = enc.state()
 
   enc.raw.preencode(state, b4a.from('hi'))
@@ -188,7 +188,26 @@ tape('raw', function (t) {
   t.is(state.start, state.end)
 })
 
-tape('uint16array', function (t) {
+test('raw uint8array', function (t) {
+  const state = enc.state()
+
+  enc.raw.uint8array.preencode(state, Uint8Array.of(1, 2))
+  t.alike(state, enc.state(0, 2))
+  enc.raw.uint8array.preencode(state, Uint8Array.of(3, 4))
+  t.alike(state, enc.state(0, 4))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.uint8array.encode(state, Uint8Array.of(1, 2))
+  t.alike(state, enc.state(2, 4, b4a.from([1, 2, 0, 0])))
+  enc.raw.uint8array.encode(state, Uint8Array.of(3, 4))
+  t.alike(state, enc.state(4, 4, b4a.from([1, 2, 3, 4])))
+
+  state.start = 0
+  t.alike(enc.raw.uint8array.decode(state), Uint8Array.of(1, 2, 3, 4))
+  t.alike(enc.raw.uint8array.decode(state), Uint8Array.of())
+})
+
+test('uint16array', function (t) {
   const state = enc.state()
 
   enc.uint16array.preencode(state, new Uint16Array([1, 2, 3]))
@@ -205,7 +224,7 @@ tape('uint16array', function (t) {
   t.exception(() => enc.uint16array.decode(state))
 })
 
-tape('uint32array', function (t) {
+test('uint32array', function (t) {
   const state = enc.state()
 
   enc.uint32array.preencode(state, new Uint32Array([1]))
@@ -227,7 +246,7 @@ tape('uint32array', function (t) {
   t.exception(() => enc.uint32array.decode(state))
 })
 
-tape('int16array', function (t) {
+test('int16array', function (t) {
   const state = enc.state()
 
   enc.int16array.preencode(state, new Int16Array([1, -2, 3]))
@@ -244,7 +263,7 @@ tape('int16array', function (t) {
   t.exception(() => enc.int16array.decode(state))
 })
 
-tape('int32array', function (t) {
+test('int32array', function (t) {
   const state = enc.state()
 
   enc.int32array.preencode(state, new Int32Array([1, -2, 3]))
@@ -261,7 +280,7 @@ tape('int32array', function (t) {
   t.exception(() => enc.int32array.decode(state))
 })
 
-tape('float32array', function (t) {
+test('float32array', function (t) {
   const state = enc.state()
 
   enc.float32array.preencode(state, new Float32Array([1.1, -2.2, 3.3]))
@@ -278,7 +297,7 @@ tape('float32array', function (t) {
   t.exception(() => enc.float32array.decode(state))
 })
 
-tape('float64array', function (t) {
+test('float64array', function (t) {
   const state = enc.state()
 
   enc.float64array.preencode(state, new Float64Array([1.1, -2.2, 3.3]))
@@ -295,7 +314,7 @@ tape('float64array', function (t) {
   t.exception(() => enc.float64array.decode(state))
 })
 
-tape('string', function (t) {
+test('string', function (t) {
   const state = enc.state()
 
   enc.string.preencode(state, '🌾')
@@ -317,7 +336,25 @@ tape('string', function (t) {
   t.exception(() => enc.string.decode(state))
 })
 
-tape('fixed32', function (t) {
+test('raw string', function (t) {
+  const state = enc.state()
+
+  enc.raw.string.preencode(state, 'hello')
+  t.alike(state, enc.state(0, 5))
+  enc.raw.string.preencode(state, ' world')
+  t.alike(state, enc.state(0, 11))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.string.encode(state, 'hello')
+  enc.raw.string.encode(state, ' world')
+  t.alike(state, enc.state(11, 11, b4a.from('hello world')))
+
+  state.start = 0
+  t.is(enc.raw.string.decode(state), 'hello world')
+  t.is(enc.raw.string.decode(state), '')
+})
+
+test('fixed32', function (t) {
   const state = enc.state()
 
   enc.fixed32.preencode(state, b4a.alloc(32).fill('a'))
@@ -339,7 +376,7 @@ tape('fixed32', function (t) {
   t.exception(() => enc.fixed32.decode(state))
 })
 
-tape('fixed64', function (t) {
+test('fixed64', function (t) {
   const state = enc.state()
 
   enc.fixed64.preencode(state, b4a.alloc(64).fill('a'))
@@ -361,7 +398,7 @@ tape('fixed64', function (t) {
   t.exception(() => enc.fixed64.decode(state))
 })
 
-tape('fixed n', function (t) {
+test('fixed n', function (t) {
   const state = enc.state()
   const fixed = enc.fixed(3)
 
@@ -386,7 +423,7 @@ tape('fixed n', function (t) {
   t.exception(() => fixed.decode(state))
 })
 
-tape('array', function (t) {
+test('array', function (t) {
   const state = enc.state()
   const arr = enc.array(enc.bool)
 
@@ -409,7 +446,27 @@ tape('array', function (t) {
   t.exception(() => arr.decode(state))
 })
 
-tape('json', function (t) {
+test('raw array', function (t) {
+  const state = enc.state()
+  const arr = enc.raw.array(enc.bool)
+
+  arr.preencode(state, [true])
+  t.alike(state, enc.state(0, 1))
+  arr.preencode(state, [true])
+  t.alike(state, enc.state(0, 2))
+
+  state.buffer = b4a.alloc(state.end)
+  arr.encode(state, [true])
+  t.alike(state, enc.state(1, 2, b4a.from([1, 0])))
+  arr.encode(state, [true])
+  t.alike(state, enc.state(2, 2, b4a.from([1, 1])))
+
+  state.start = 0
+  t.alike(arr.decode(state), [true, true])
+  t.alike(arr.decode(state), [])
+})
+
+test('json', function (t) {
   const state = enc.state()
 
   enc.json.preencode(state, { a: 1, b: 2 })
@@ -428,7 +485,23 @@ tape('json', function (t) {
   t.exception(() => enc.json.decode(state))
 })
 
-tape('lexint: big numbers', function (t) {
+test('raw json', function (t) {
+  const state = enc.state()
+
+  enc.raw.json.preencode(state, { a: 1, b: 2 })
+  t.alike(state, enc.state(0, 13))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.json.encode(state, { a: 1, b: 2 })
+  t.alike(state, enc.state(13, 13, b4a.from('{"a":1,"b":2}')))
+
+  state.start = 0
+  t.alike(enc.raw.json.decode(state), { a: 1, b: 2 })
+
+  t.exception(() => enc.json.decode(state))
+})
+
+test('lexint: big numbers', function (t) {
   t.plan(1)
 
   let prev = enc.encode(enc.lexint, 0)
@@ -445,7 +518,7 @@ tape('lexint: big numbers', function (t) {
   t.is(n, Infinity)
 })
 
-tape('lexint: range precision', function (t) {
+test('lexint: range precision', function (t) {
   t.plan(2)
   const a = 1e55
   const b = 1.0000000000001e55
@@ -455,7 +528,7 @@ tape('lexint: range precision', function (t) {
   t.not(ha, hb)
 })
 
-tape('lexint: range precision', function (t) {
+test('lexint: range precision', function (t) {
   let prev = enc.encode(enc.lexint, 0)
   const skip = 0.000000001e55
   for (let i = 0, n = 1e55; i < 1000; n = 1e55 + skip * ++i) {
@@ -467,7 +540,7 @@ tape('lexint: range precision', function (t) {
   t.end()
 })
 
-tape('lexint: small numbers', function (t) {
+test('lexint: small numbers', function (t) {
   let prev = enc.encode(enc.lexint, 0)
   for (let n = 1; n < 256 * 256 * 16; n++) {
     const cur = enc.encode(enc.lexint, n)
@@ -478,7 +551,7 @@ tape('lexint: small numbers', function (t) {
   t.end()
 })
 
-tape('lexint: throws', function (t) {
+test('lexint: throws', function (t) {
   t.exception(() => {
     enc.decode(enc.lexint, b4a.alloc(1, 251))
   })
@@ -554,7 +627,7 @@ tape('lexint: throws', function (t) {
   t.end()
 })
 
-tape('lexint: unpack', function (t) {
+test('lexint: unpack', function (t) {
   let n
   let skip = 1
 

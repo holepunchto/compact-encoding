@@ -110,14 +110,14 @@ exports.ucs2 = exports.utf16le = string('utf16le')
 exports.array = function array (enc) {
   return {
     preencode (state, list) {
-      for (let i = 0; i < list.length; i++) enc.preencode(state, list[i])
+      for (const value of list) enc.preencode(state, value)
     },
     encode (state, list) {
-      for (let i = 0; i < list.length; i++) enc.encode(state, list[i])
+      for (const value of list) enc.encode(state, value)
     },
     decode (state) {
       const arr = []
-      for (let i = 0; state.start < state.end; i++) arr.push(enc.decode(state))
+      while (state.start < state.end) arr.push(enc.decode(state))
       return arr
     }
   }
