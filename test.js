@@ -1,5 +1,6 @@
 const enc = require('./')
 const tape = require('brittle')
+const b4a = require('b4a')
 
 tape('uint', function (t) {
   const state = enc.state()
@@ -11,13 +12,13 @@ tape('uint', function (t) {
   enc.uint.preencode(state, Number.MAX_SAFE_INTEGER)
   t.alike(state, enc.state(0, 13))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.uint.encode(state, 42)
-  t.alike(state, enc.state(1, 13, Buffer.from([42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(1, 13, b4a.from([42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.uint.encode(state, 4200)
-  t.alike(state, enc.state(4, 13, Buffer.from([42, 0xfd, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(4, 13, b4a.from([42, 0xfd, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.uint.encode(state, Number.MAX_SAFE_INTEGER)
-  t.alike(state, enc.state(13, 13, Buffer.from([42, 0xfd, 104, 16, 0xff, 255, 255, 255, 255, 255, 255, 31, 0])))
+  t.alike(state, enc.state(13, 13, b4a.from([42, 0xfd, 104, 16, 0xff, 255, 255, 255, 255, 255, 255, 31, 0])))
 
   state.start = 0
   t.is(enc.uint.decode(state), 42)
@@ -36,11 +37,11 @@ tape('int', function (t) {
   enc.int.preencode(state, -4200)
   t.alike(state, enc.state(0, 4))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.int.encode(state, 42)
-  t.alike(state, enc.state(1, 4, Buffer.from([84, 0, 0, 0])))
+  t.alike(state, enc.state(1, 4, b4a.from([84, 0, 0, 0])))
   enc.int.encode(state, -4200)
-  t.alike(state, enc.state(4, 4, Buffer.from([84, 0xfd, 207, 32])))
+  t.alike(state, enc.state(4, 4, b4a.from([84, 0xfd, 207, 32])))
 
   state.start = 0
   t.is(enc.int.decode(state), 42)
@@ -56,10 +57,10 @@ tape('float64', function (t) {
   enc.float64.preencode(state, 162.2377294)
   t.alike(state, enc.state(0, 8))
 
-  state.buffer = Buffer.alloc(state.end)
-  t.alike(state, enc.state(0, 8, Buffer.from([0, 0, 0, 0, 0, 0, 0, 0])))
+  state.buffer = b4a.alloc(state.end)
+  t.alike(state, enc.state(0, 8, b4a.from([0, 0, 0, 0, 0, 0, 0, 0])))
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(8, 8, Buffer.from([0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(state, enc.state(8, 8, b4a.from([0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
 
   state.start = 0
   t.is(enc.float64.decode(state), 162.2377294)
@@ -76,11 +77,11 @@ tape('float64', function (t) {
   enc.float64.preencode(state, 162.2377294)
   t.alike(state, enc.state(0, 9))
 
-  state.buffer = Buffer.alloc(state.end)
-  t.alike(state, enc.state(0, 9, Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  state.buffer = b4a.alloc(state.end)
+  t.alike(state, enc.state(0, 9, b4a.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.int.encode(state, 0)
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(9, 9, Buffer.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(state, enc.state(9, 9, b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
 
   state.start = 0
   t.is(enc.int.decode(state), 0)
@@ -88,14 +89,14 @@ tape('float64', function (t) {
   t.is(state.start, state.end)
 
   // subarray
-  const buf = Buffer.alloc(10)
+  const buf = b4a.alloc(10)
   state.start = 0
   state.buffer = buf.subarray(1)
-  t.alike(state, enc.state(0, 9, Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(0, 9, b4a.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.int.encode(state, 0)
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(9, 9, Buffer.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
-  t.alike(buf, Buffer.from([0, 0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]))
+  t.alike(state, enc.state(9, 9, b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(buf, b4a.from([0, 0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]))
 
   state.start = 0
   t.is(enc.int.decode(state), 0)
@@ -108,9 +109,9 @@ tape('float64', function (t) {
   state.buffer = null
 
   enc.float64.preencode(state, 162.2377294)
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.float64.encode(state, 0)
-  t.alike(state, enc.state(8, 8, Buffer.from([0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(8, 8, b4a.from([0, 0, 0, 0, 0, 0, 0, 0])))
 
   state.start = 0
   t.is(enc.float64.decode(state), 0)
@@ -122,9 +123,9 @@ tape('float64', function (t) {
   state.buffer = null
 
   enc.float64.preencode(state, Infinity)
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.float64.encode(state, Infinity)
-  t.alike(state, enc.state(8, 8, Buffer.from([0, 0, 0, 0, 0, 0, 0xf0, 0x7f])))
+  t.alike(state, enc.state(8, 8, b4a.from([0, 0, 0, 0, 0, 0, 0xf0, 0x7f])))
 
   state.start = 0
   t.is(enc.float64.decode(state), Infinity)
@@ -136,9 +137,9 @@ tape('float64', function (t) {
   state.buffer = null
 
   enc.float64.preencode(state, 0.1 + 0.2)
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.float64.encode(state, 0.1 + 0.2)
-  t.alike(state, enc.state(8, 8, Buffer.from([0x34, 0x33, 0x33, 0x33, 0x33, 0x33, 0xd3, 0x3f])))
+  t.alike(state, enc.state(8, 8, b4a.from([0x34, 0x33, 0x33, 0x33, 0x33, 0x33, 0xd3, 0x3f])))
 
   state.start = 0
   t.is(enc.float64.decode(state), 0.1 + 0.2)
@@ -148,24 +149,24 @@ tape('float64', function (t) {
 tape('buffer', function (t) {
   const state = enc.state()
 
-  enc.buffer.preencode(state, Buffer.from('hi'))
+  enc.buffer.preencode(state, b4a.from('hi'))
   t.alike(state, enc.state(0, 3))
-  enc.buffer.preencode(state, Buffer.from('hello'))
+  enc.buffer.preencode(state, b4a.from('hello'))
   t.alike(state, enc.state(0, 9))
   enc.buffer.preencode(state, null)
   t.alike(state, enc.state(0, 10))
 
-  state.buffer = Buffer.alloc(state.end)
-  enc.buffer.encode(state, Buffer.from('hi'))
-  t.alike(state, enc.state(3, 10, Buffer.from('\x02hi\x00\x00\x00\x00\x00\x00\x00')))
-  enc.buffer.encode(state, Buffer.from('hello'))
-  t.alike(state, enc.state(9, 10, Buffer.from('\x02hi\x05hello\x00')))
+  state.buffer = b4a.alloc(state.end)
+  enc.buffer.encode(state, b4a.from('hi'))
+  t.alike(state, enc.state(3, 10, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00')))
+  enc.buffer.encode(state, b4a.from('hello'))
+  t.alike(state, enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')))
   enc.buffer.encode(state, null)
-  t.alike(state, enc.state(10, 10, Buffer.from('\x02hi\x05hello\x00')))
+  t.alike(state, enc.state(10, 10, b4a.from('\x02hi\x05hello\x00')))
 
   state.start = 0
-  t.alike(enc.buffer.decode(state), Buffer.from('hi'))
-  t.alike(enc.buffer.decode(state), Buffer.from('hello'))
+  t.alike(enc.buffer.decode(state), b4a.from('hi'))
+  t.alike(enc.buffer.decode(state), b4a.from('hello'))
   t.is(enc.buffer.decode(state), null)
   t.is(state.start, state.end)
 
@@ -175,15 +176,15 @@ tape('buffer', function (t) {
 tape('raw', function (t) {
   const state = enc.state()
 
-  enc.raw.preencode(state, Buffer.from('hi'))
+  enc.raw.preencode(state, b4a.from('hi'))
   t.alike(state, enc.state(0, 2))
 
-  state.buffer = Buffer.alloc(state.end)
-  enc.raw.encode(state, Buffer.from('hi'))
-  t.alike(state, enc.state(2, 2, Buffer.from('hi')))
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.encode(state, b4a.from('hi'))
+  t.alike(state, enc.state(2, 2, b4a.from('hi')))
 
   state.start = 0
-  t.alike(enc.raw.decode(state), Buffer.from('hi'))
+  t.alike(enc.raw.decode(state), b4a.from('hi'))
   t.is(state.start, state.end)
 })
 
@@ -193,9 +194,9 @@ tape('uint16array', function (t) {
   enc.uint16array.preencode(state, new Uint16Array([1, 2, 3]))
   t.alike(state, enc.state(0, 7))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.uint16array.encode(state, new Uint16Array([1, 2, 3]))
-  t.alike(state, enc.state(7, 7, Buffer.from([3, 1, 0, 2, 0, 3, 0])))
+  t.alike(state, enc.state(7, 7, b4a.from([3, 1, 0, 2, 0, 3, 0])))
 
   state.start = 0
   t.alike(enc.uint16array.decode(state), new Uint16Array([1, 2, 3]))
@@ -212,11 +213,11 @@ tape('uint32array', function (t) {
   enc.uint32array.preencode(state, new Uint32Array([42, 43]))
   t.alike(state, enc.state(0, 14))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.uint32array.encode(state, new Uint32Array([1]))
-  t.alike(state, enc.state(5, 14, Buffer.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(5, 14, b4a.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.uint32array.encode(state, new Uint32Array([42, 43]))
-  t.alike(state, enc.state(14, 14, Buffer.from([1, 1, 0, 0, 0, 2, 42, 0, 0, 0, 43, 0, 0, 0])))
+  t.alike(state, enc.state(14, 14, b4a.from([1, 1, 0, 0, 0, 2, 42, 0, 0, 0, 43, 0, 0, 0])))
 
   state.start = 0
   t.alike(enc.uint32array.decode(state), new Uint32Array([1]))
@@ -232,9 +233,9 @@ tape('int16array', function (t) {
   enc.int16array.preencode(state, new Int16Array([1, -2, 3]))
   t.alike(state, enc.state(0, 7))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.int16array.encode(state, new Int16Array([1, -2, 3]))
-  t.alike(state, enc.state(7, 7, Buffer.from([3, 1, 0, 0xfe, 0xff, 3, 0])))
+  t.alike(state, enc.state(7, 7, b4a.from([3, 1, 0, 0xfe, 0xff, 3, 0])))
 
   state.start = 0
   t.alike(enc.int16array.decode(state), new Int16Array([1, -2, 3]))
@@ -249,9 +250,9 @@ tape('int32array', function (t) {
   enc.int32array.preencode(state, new Int32Array([1, -2, 3]))
   t.alike(state, enc.state(0, 13))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.int32array.encode(state, new Int32Array([1, -2, 3]))
-  t.alike(state, enc.state(13, 13, Buffer.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0])))
+  t.alike(state, enc.state(13, 13, b4a.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0])))
 
   state.start = 0
   t.alike(enc.int32array.decode(state), new Int32Array([1, -2, 3]))
@@ -266,9 +267,9 @@ tape('float32array', function (t) {
   enc.float32array.preencode(state, new Float32Array([1.1, -2.2, 3.3]))
   t.alike(state, enc.state(0, 13))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.float32array.encode(state, new Float32Array([1.1, -2.2, 3.3]))
-  t.alike(state, enc.state(13, 13, Buffer.from([3, 0xcd, 0xcc, 0x8c, 0x3f, 0xcd, 0xcc, 0x0c, 0xc0, 0x33, 0x33, 0x53, 0x40])))
+  t.alike(state, enc.state(13, 13, b4a.from([3, 0xcd, 0xcc, 0x8c, 0x3f, 0xcd, 0xcc, 0x0c, 0xc0, 0x33, 0x33, 0x53, 0x40])))
 
   state.start = 0
   t.alike(enc.float32array.decode(state), new Float32Array([1.1, -2.2, 3.3]))
@@ -283,9 +284,9 @@ tape('float64array', function (t) {
   enc.float64array.preencode(state, new Float64Array([1.1, -2.2, 3.3]))
   t.alike(state, enc.state(0, 25))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.float64array.encode(state, new Float64Array([1.1, -2.2, 3.3]))
-  t.alike(state, enc.state(25, 25, Buffer.from([3, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0xf1, 0x3f, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x01, 0xc0, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0a, 0x40])))
+  t.alike(state, enc.state(25, 25, b4a.from([3, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0xf1, 0x3f, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x01, 0xc0, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0a, 0x40])))
 
   state.start = 0
   t.alike(enc.float64array.decode(state), new Float64Array([1.1, -2.2, 3.3]))
@@ -302,11 +303,11 @@ tape('string', function (t) {
   enc.string.preencode(state, 'høsten er fin')
   t.alike(state, enc.state(0, 20))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.string.encode(state, '🌾')
-  t.alike(state, enc.state(5, 20, Buffer.from('\x04🌾\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')))
+  t.alike(state, enc.state(5, 20, b4a.from('\x04🌾\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')))
   enc.string.encode(state, 'høsten er fin')
-  t.alike(state, enc.state(20, 20, Buffer.from('\x04🌾\x0ehøsten er fin')))
+  t.alike(state, enc.state(20, 20, b4a.from('\x04🌾\x0ehøsten er fin')))
 
   state.start = 0
   t.is(enc.string.decode(state), '🌾')
@@ -319,20 +320,20 @@ tape('string', function (t) {
 tape('fixed32', function (t) {
   const state = enc.state()
 
-  enc.fixed32.preencode(state, Buffer.alloc(32).fill('a'))
+  enc.fixed32.preencode(state, b4a.alloc(32).fill('a'))
   t.alike(state, enc.state(0, 32))
-  enc.fixed32.preencode(state, Buffer.alloc(32).fill('b'))
+  enc.fixed32.preencode(state, b4a.alloc(32).fill('b'))
   t.alike(state, enc.state(0, 64))
 
-  state.buffer = Buffer.alloc(state.end)
-  enc.fixed32.encode(state, Buffer.alloc(32).fill('a'))
-  t.alike(state, enc.state(32, 64, Buffer.alloc(64).fill('a', 0, 32)))
-  enc.fixed32.encode(state, Buffer.alloc(32).fill('b'))
-  t.alike(state, enc.state(64, 64, Buffer.alloc(64).fill('a', 0, 32).fill('b', 32, 64)))
+  state.buffer = b4a.alloc(state.end)
+  enc.fixed32.encode(state, b4a.alloc(32).fill('a'))
+  t.alike(state, enc.state(32, 64, b4a.alloc(64).fill('a', 0, 32)))
+  enc.fixed32.encode(state, b4a.alloc(32).fill('b'))
+  t.alike(state, enc.state(64, 64, b4a.alloc(64).fill('a', 0, 32).fill('b', 32, 64)))
 
   state.start = 0
-  t.alike(enc.fixed32.decode(state), Buffer.alloc(32).fill('a'))
-  t.alike(enc.fixed32.decode(state), Buffer.alloc(32).fill('b'))
+  t.alike(enc.fixed32.decode(state), b4a.alloc(32).fill('a'))
+  t.alike(enc.fixed32.decode(state), b4a.alloc(32).fill('b'))
   t.is(state.start, state.end)
 
   t.exception(() => enc.fixed32.decode(state))
@@ -341,20 +342,20 @@ tape('fixed32', function (t) {
 tape('fixed64', function (t) {
   const state = enc.state()
 
-  enc.fixed64.preencode(state, Buffer.alloc(64).fill('a'))
+  enc.fixed64.preencode(state, b4a.alloc(64).fill('a'))
   t.alike(state, enc.state(0, 64))
-  enc.fixed64.preencode(state, Buffer.alloc(64).fill('b'))
+  enc.fixed64.preencode(state, b4a.alloc(64).fill('b'))
   t.alike(state, enc.state(0, 128))
 
-  state.buffer = Buffer.alloc(state.end)
-  enc.fixed64.encode(state, Buffer.alloc(64).fill('a'))
-  t.alike(state, enc.state(64, 128, Buffer.alloc(128).fill('a', 0, 64)))
-  enc.fixed64.encode(state, Buffer.alloc(64).fill('b'))
-  t.alike(state, enc.state(128, 128, Buffer.alloc(128).fill('a', 0, 64).fill('b', 64, 128)))
+  state.buffer = b4a.alloc(state.end)
+  enc.fixed64.encode(state, b4a.alloc(64).fill('a'))
+  t.alike(state, enc.state(64, 128, b4a.alloc(128).fill('a', 0, 64)))
+  enc.fixed64.encode(state, b4a.alloc(64).fill('b'))
+  t.alike(state, enc.state(128, 128, b4a.alloc(128).fill('a', 0, 64).fill('b', 64, 128)))
 
   state.start = 0
-  t.alike(enc.fixed64.decode(state), Buffer.alloc(64).fill('a'))
-  t.alike(enc.fixed64.decode(state), Buffer.alloc(64).fill('b'))
+  t.alike(enc.fixed64.decode(state), b4a.alloc(64).fill('a'))
+  t.alike(enc.fixed64.decode(state), b4a.alloc(64).fill('b'))
   t.is(state.start, state.end)
 
   t.exception(() => enc.fixed64.decode(state))
@@ -364,20 +365,20 @@ tape('fixed n', function (t) {
   const state = enc.state()
   const fixed = enc.fixed(3)
 
-  fixed.preencode(state, Buffer.alloc(3).fill('a'))
+  fixed.preencode(state, b4a.alloc(3).fill('a'))
   t.alike(state, enc.state(0, 3))
-  fixed.preencode(state, Buffer.alloc(3).fill('b'))
+  fixed.preencode(state, b4a.alloc(3).fill('b'))
   t.alike(state, enc.state(0, 6))
 
-  state.buffer = Buffer.alloc(state.end)
-  fixed.encode(state, Buffer.alloc(3).fill('a'))
-  t.alike(state, enc.state(3, 6, Buffer.alloc(6).fill('a', 0, 3)))
-  fixed.encode(state, Buffer.alloc(3).fill('b'))
-  t.alike(state, enc.state(6, 6, Buffer.alloc(6).fill('a', 0, 3).fill('b', 3, 6)))
+  state.buffer = b4a.alloc(state.end)
+  fixed.encode(state, b4a.alloc(3).fill('a'))
+  t.alike(state, enc.state(3, 6, b4a.alloc(6).fill('a', 0, 3)))
+  fixed.encode(state, b4a.alloc(3).fill('b'))
+  t.alike(state, enc.state(6, 6, b4a.alloc(6).fill('a', 0, 3).fill('b', 3, 6)))
 
   state.start = 0
-  t.alike(fixed.decode(state), Buffer.alloc(3).fill('a'))
-  t.alike(fixed.decode(state), Buffer.alloc(3).fill('b'))
+  t.alike(fixed.decode(state), b4a.alloc(3).fill('a'))
+  t.alike(fixed.decode(state), b4a.alloc(3).fill('b'))
   t.is(state.start, state.end)
 
   t.exception(() => fixed.decode(state))
@@ -394,11 +395,11 @@ tape('array', function (t) {
   arr.preencode(state, [false, false, true, true])
   t.alike(state, enc.state(0, 9))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   arr.encode(state, [true, false, true])
-  t.alike(state, enc.state(4, 9, Buffer.from([3, 1, 0, 1, 0, 0, 0, 0, 0])))
+  t.alike(state, enc.state(4, 9, b4a.from([3, 1, 0, 1, 0, 0, 0, 0, 0])))
   arr.encode(state, [false, false, true, true])
-  t.alike(state, enc.state(9, 9, Buffer.from([3, 1, 0, 1, 4, 0, 0, 1, 1])))
+  t.alike(state, enc.state(9, 9, b4a.from([3, 1, 0, 1, 4, 0, 0, 1, 1])))
 
   state.start = 0
   t.alike(arr.decode(state), [true, false, true])
@@ -414,11 +415,11 @@ tape('json', function (t) {
   enc.json.preencode(state, { a: 1, b: 2 })
   t.alike(state, enc.state(0, 14))
 
-  state.buffer = Buffer.alloc(state.end)
+  state.buffer = b4a.alloc(state.end)
   enc.json.encode(state, { a: 1, b: 2 })
-  t.alike(state, enc.state(14, 14, Buffer.concat([
-    Buffer.from([13]),
-    Buffer.from('{"a":1,"b":2}')
+  t.alike(state, enc.state(14, 14, b4a.concat([
+    b4a.from([13]),
+    b4a.from('{"a":1,"b":2}')
   ])))
 
   state.start = 0
@@ -437,7 +438,7 @@ tape('lexint: big numbers', function (t) {
 
   for (n = 1; n < Number.MAX_VALUE; n += skip) {
     const cur = enc.encode(enc.lexint, n)
-    if (Buffer.compare(cur, prev) < 1) break
+    if (b4a.compare(cur, prev) < 1) break
     prev = cur
     skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
   }
@@ -459,7 +460,7 @@ tape('lexint: range precision', function (t) {
   const skip = 0.000000001e55
   for (let i = 0, n = 1e55; i < 1000; n = 1e55 + skip * ++i) {
     const cur = enc.encode(enc.lexint, n)
-    if (Buffer.compare(cur, prev) < 1) t.fail('cur <= prev')
+    if (b4a.compare(cur, prev) < 1) t.fail('cur <= prev')
     prev = cur
   }
   t.ok(true)
@@ -470,7 +471,7 @@ tape('lexint: small numbers', function (t) {
   let prev = enc.encode(enc.lexint, 0)
   for (let n = 1; n < 256 * 256 * 16; n++) {
     const cur = enc.encode(enc.lexint, n)
-    if (Buffer.compare(cur, prev) < 1) t.fail('cur <= prev')
+    if (b4a.compare(cur, prev) < 1) t.fail('cur <= prev')
     prev = cur
   }
   t.ok(true)
@@ -479,7 +480,7 @@ tape('lexint: small numbers', function (t) {
 
 tape('lexint: throws', function (t) {
   t.exception(() => {
-    enc.decode(enc.lexint, Buffer.alloc(1, 251))
+    enc.decode(enc.lexint, b4a.alloc(1, 251))
   })
 
   let num = 252
@@ -487,7 +488,7 @@ tape('lexint: throws', function (t) {
   const state = enc.state()
 
   enc.lexint.preencode(state, num)
-  state.buffer = Buffer.alloc(state.end - state.start)
+  state.buffer = b4a.alloc(state.end - state.start)
   enc.lexint.encode(state, num)
 
   t.exception(() => {
@@ -501,7 +502,7 @@ tape('lexint: throws', function (t) {
   state.buffer = null
 
   enc.lexint.preencode(state, num)
-  state.buffer = Buffer.alloc(state.end - state.start)
+  state.buffer = b4a.alloc(state.end - state.start)
   enc.lexint.encode(state, num)
 
   t.exception(() => {
@@ -515,7 +516,7 @@ tape('lexint: throws', function (t) {
   state.buffer = null
 
   enc.lexint.preencode(state, num)
-  state.buffer = Buffer.alloc(state.end - state.start)
+  state.buffer = b4a.alloc(state.end - state.start)
   enc.lexint.encode(state, num)
 
   t.exception(() => {
@@ -529,7 +530,7 @@ tape('lexint: throws', function (t) {
   state.buffer = null
 
   enc.lexint.preencode(state, num)
-  state.buffer = Buffer.alloc(state.end - state.start)
+  state.buffer = b4a.alloc(state.end - state.start)
   enc.lexint.encode(state, num)
 
   t.exception(() => {
@@ -543,7 +544,7 @@ tape('lexint: throws', function (t) {
   state.buffer = null
 
   enc.lexint.preencode(state, num)
-  state.buffer = Buffer.alloc(state.end - state.start)
+  state.buffer = b4a.alloc(state.end - state.start)
   enc.lexint.encode(state, num)
 
   t.exception(() => {
