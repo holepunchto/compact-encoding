@@ -307,7 +307,7 @@ function string (encoding) {
   }
 }
 
-exports.string = exports.utf8 = string('utf-8')
+const utf8 = exports.string = exports.utf8 = string('utf-8')
 exports.ascii = string('ascii')
 exports.hex = string('hex')
 exports.base64 = string('base64')
@@ -374,6 +374,30 @@ exports.array = function array (enc) {
       for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
       return arr
     }
+  }
+}
+
+exports.json = {
+  preencode (state, v) {
+    utf8.preencode(state, JSON.stringify(v))
+  },
+  encode (state, v) {
+    utf8.encode(state, JSON.stringify(v))
+  },
+  decode (state) {
+    return JSON.parse(utf8.decode(state))
+  }
+}
+
+exports.ndjson = {
+  preencode (state, v) {
+    utf8.preencode(state, JSON.stringify(v) + '\n')
+  },
+  encode (state, v) {
+    utf8.encode(state, JSON.stringify(v) + '\n')
+  },
+  decode (state) {
+    return JSON.parse(utf8.decode(state))
   }
 }
 
