@@ -3,8 +3,8 @@ const b4a = require('b4a')
 const LE = (new Uint8Array(new Uint16Array([0xff]).buffer))[0] === 0xff
 const BE = !LE
 
-exports.state = function () {
-  return { start: 0, end: 0, buffer: null }
+exports.state = function (start = 0, end = 0, buffer = null) {
+  return { start, end, buffer, cache: null }
 }
 
 const uint = exports.uint = {
@@ -445,7 +445,7 @@ function fromAbstractEncoder (enc) {
 }
 
 exports.encode = function encode (enc, m) {
-  const state = { start: 0, end: 0, buffer: null }
+  const state = exports.state()
   enc.preencode(state, m)
   state.buffer = b4a.allocUnsafe(state.end)
   enc.encode(state, m)
@@ -453,7 +453,7 @@ exports.encode = function encode (enc, m) {
 }
 
 exports.decode = function decode (enc, buffer) {
-  return enc.decode({ start: 0, end: buffer.byteLength, buffer })
+  return enc.decode(exports.state(0, buffer.byteLength, buffer))
 }
 
 function zigZag (enc) {
