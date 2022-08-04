@@ -75,6 +75,7 @@ const bool = cenc.decode(cenc.bool, buf)
 The following encodings are bundled as they are primitives that can be used
 to build others on top. Feel free to PR more that are missing.
 
+* `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
 * `cenc.uint` - Encodes a uint using [compact-uint](https://github.com/mafintosh/compact-uint).
 * `cenc.uint8` - Encodes a fixed size uint8.
 * `cenc.uint16` - Encodes a fixed size uint16. Useful for things like ports.
@@ -97,32 +98,48 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
-* `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
+* `cenc.raw.buffer` - Encodes a buffer without a length prefixed.
 * `cenc.uint8array` - Encodes a uint8array with its element length uint prefixed.
+* `cenc.raw.uint8array` - Encodes a uint8array without a length prefixed.
 * `cenc.uint16array` - Encodes a uint16array with its element length uint prefixed.
+* `cenc.raw.uint16array` - Encodes a uint16array without a length prefixed.
 * `cenc.uint32array` - Encodes a uint32array with its element length uint prefixed.
+* `cenc.raw.uint32array` - Encodes a uint32array without a length prefixed.
 * `cenc.int8array` - Encodes a int8array with its element length uint prefixed.
+* `cenc.raw.int8array` - Encodes a int8array without a length prefixed.
 * `cenc.int16array` - Encodes a int16array with its element length uint prefixed.
+* `cenc.raw.int16array` - Encodes a int16array without a length prefixed.
 * `cenc.int32array` - Encodes a int32array with its element length uint prefixed.
+* `cenc.raw.int32array` - Encodes a int32array without a length prefixed.
 * `cenc.float32array` - Encodes a float32array with its element length uint prefixed.
+* `cenc.raw.float32array` - Encodes a float32array without a length prefixed.
 * `cenc.float64array` - Encodes a float64array with its element length uint prefixed.
+* `cenc.raw.float64array` - Encodes a float64array without a length prefixed.
 * `cenc.bool` - Encodes a boolean as 1 or 0.
 * `cenc.string`, `cenc.utf8` - Encodes a utf-8 string, similar to buffer.
+* `cenc.raw.string`, `cenc.raw.utf8` - Encodes a utf-8 string without a length prefixed.
 * `cenc.string.fixed(n)`, `cenc.utf8.fixed(n)` - Encodes a fixed sized utf-8 string.
 * `cenc.ascii` - Encodes an ascii string.
+* `cenc.raw.ascii` - Encodes an ascii string without a length prefixed.
 * `cenc.ascii.fixed(n)` - Encodes a fixed size ascii string.
 * `cenc.hex` - Encodes a hex string.
+* `cenc.raw.hex` - Encodes a hex string without a length prefixed.
 * `cenc.hex.fixed(n)` - Encodes a fixed size hex string.
 * `cenc.base64` - Encodes a base64 string.
+* `cenc.raw.base64` - Encodes a base64 string without a length prefixed.
 * `cenc.base64.fixed(n)` - Encodes a fixed size base64 string.
 * `cenc.utf16le`, `cenc.ucs2` - Encodes a utf16le string.
+* `cenc.raw.utf16le`, `cenc.raw.ucs2` - Encodes a utf16le string without a length prefixed.
 * `cenc.utf16le.fixed(n)`, `cenc.ucs2.fixed(n)` - Encodes a fixed size utf16le string.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.
 * `cenc.fixed64` - Encodes a fixed 64 byte buffer.
 * `cenc.fixed(n)` - Makes a fixed sized encoder.
 * `cenc.array(enc)` - Makes an array encoder from another encoder. Arrays are uint prefixed with their length.
+* `cenc.raw.array(enc)` - Makes an array encoder from another encoder, without a length prefixed.
 * `cenc.json` - Encodes a JSON value as utf-8.
+* `cenc.raw.json` - Encodes a JSON value as utf-8 without a length prefixed.
 * `cenc.ndjson` - Encodes a JSON value as newline delimited utf-8.
+* `cenc.raw.ndjson` - Encodes a JSON value as newline delimited utf-8 without a length prefixed.
 * `cenc.from(enc)` - Makes a compact encoder from a [codec](https://github.com/mafintosh/codecs) or [abstract-encoding](https://github.com/mafintosh/abstract-encoding).
 
 ## License

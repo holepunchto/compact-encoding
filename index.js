@@ -1,11 +1,12 @@
 const b4a = require('b4a')
 
-const LE = (new Uint8Array(new Uint16Array([0xff]).buffer))[0] === 0xff
-const BE = !LE
+const { BE } = require('./endian')
 
 exports.state = function (start = 0, end = 0, buffer = null) {
   return { start, end, buffer, cache: null }
 }
+
+const raw = exports.raw = require('./raw')
 
 const uint = exports.uint = {
   preencode (state, n) {
@@ -211,7 +212,7 @@ exports.float64 = {
   }
 }
 
-exports.buffer = {
+const buffer = exports.buffer = {
   preencode (state, b) {
     if (b) uint8array.preencode(state, b)
     else state.end++
@@ -228,18 +229,15 @@ exports.buffer = {
   }
 }
 
-const raw = exports.raw = {
+exports.binary = {
+  ...buffer,
   preencode (state, b) {
-    state.end += b.byteLength
+    if (typeof b === 'string') utf8.preencode(state, b)
+    else buffer.preencode(state, b)
   },
   encode (state, b) {
-    state.buffer.set(b, state.start)
-    state.start += b.byteLength
-  },
-  decode (state) {
-    const b = state.buffer.subarray(state.start, state.end)
-    state.start = state.end
-    return b
+    if (typeof b === 'string') utf8.encode(state, b)
+    else buffer.encode(state, b)
   }
 }
 
