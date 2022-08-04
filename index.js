@@ -415,9 +415,28 @@ exports.ndjson = {
 }
 
 exports.from = function from (enc) {
+  if (typeof enc === 'string') return fromNamed(enc)
   if (enc.preencode) return enc
   if (enc.encodingLength) return fromAbstractEncoder(enc)
   return fromCodec(enc)
+}
+
+function fromNamed (enc) {
+  switch (enc) {
+    case 'ascii': return raw.ascii
+    case 'utf-8':
+    case 'utf8': return raw.utf8
+    case 'hex': return raw.hex
+    case 'base64': return raw.base64
+    case 'utf16-le':
+    case 'utf16le':
+    case 'ucs-2':
+    case 'ucs2': return raw.ucs2
+    case 'ndjson': return raw.ndjson
+    case 'json': return raw.json
+    case 'binary':
+    default: return raw.binary
+  }
 }
 
 function fromCodec (enc) {
