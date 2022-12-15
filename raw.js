@@ -131,7 +131,7 @@ exports.json = {
     utf8.encode(state, JSON.stringify(v))
   },
   decode (state) {
-    return JSON.parse(utf8.decode(state))
+    return revive(JSON.parse(utf8.decode(state)))
   }
 }
 
@@ -143,6 +143,16 @@ exports.ndjson = {
     utf8.encode(state, JSON.stringify(v) + '\n')
   },
   decode (state) {
-    return JSON.parse(utf8.decode(state))
+    return revive(JSON.parse(utf8.decode(state)))
   }
+}
+
+function revive (o) {
+  if (o.type === 'Buffer') return b4a.from(o.data)
+  if (Array.isArray(o)) return o.map(revive)
+  if (typeof o === 'object' && o !== null) {
+    const r = Object.entries(o).map(([k, v]) => [k, revive(v)])
+    return Object.fromEntries(r)
+  }
+  return o
 }
