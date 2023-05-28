@@ -144,4 +144,4 @@ to build others on top. Feel free to PR more that are missing.
 
 ## License
 
-MIT
+Apache 2.0
