@@ -18,7 +18,7 @@
     "url": "https://github.com/compact-encoding/compact-encoding.git"
   },
   "author": "Mathias Buus (@mafintosh)",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/compact-encoding/compact-encoding/issues"
   },
