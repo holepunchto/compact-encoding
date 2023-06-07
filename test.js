@@ -654,3 +654,20 @@ test('lexint: unpack', function (t) {
     }
   }
 })
+
+test('any', function (t) {
+  const o = {
+    hello: 'world',
+    num: 42,
+    neg: -42,
+    arr: [{ yes: 1 }, { no: false }],
+    nest: {},
+    float: 0.54
+  }
+
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, o)), o)
+
+  const arr = new Array(3)
+
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, arr)), [null, null, null])
+})

@@ -140,6 +140,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.raw.json` - Encodes a JSON value as utf-8 without a length prefixed.
 * `cenc.ndjson` - Encodes a JSON value as newline delimited utf-8.
 * `cenc.raw.ndjson` - Encodes a JSON value as newline delimited utf-8 without a length prefixed.
+* `cenc.any` - Encodes any value into a buffer - self described. Like JSON+buffer, but using compact types.
 * `cenc.from(enc)` - Makes a compact encoder from a [codec](https://github.com/mafintosh/codecs) or [abstract-encoding](https://github.com/mafintosh/abstract-encoding).
 
 ## License
