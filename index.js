@@ -358,18 +358,6 @@ const fixed = exports.fixed = function fixed (n) {
 exports.fixed32 = fixed(32)
 exports.fixed64 = fixed(64)
 
-exports.none = {
-  preencode (state, m) {
-    // do nothing
-  },
-  encode (state, m) {
-    // do nothing
-  },
-  decode (state) {
-    return null
-  }
-}
-
 exports.array = function array (enc) {
   return {
     preencode (state, list) {
@@ -412,6 +400,117 @@ exports.ndjson = {
   decode (state) {
     return JSON.parse(utf8.decode(state))
   }
+}
+
+// simple helper for when you want to just express nothing
+exports.none = {
+  preencode (state, n) {
+    // do nothing
+  },
+  encode (state, n) {
+    // do nothing
+  },
+  decode (state) {
+    return null
+  }
+}
+
+// "any" encoders here for helping just structure any object without schematising it
+
+const anyArray = {
+  preencode (state, arr) {
+    uint.preencode(state, arr.length)
+    for (let i = 0; i < arr.length; i++) {
+      any.preencode(state, arr[i])
+    }
+  },
+  encode (state, arr) {
+    uint.encode(state, arr.length)
+    for (let i = 0; i < arr.length; i++) {
+      any.encode(state, arr[i])
+    }
+  },
+  decode (state) {
+    const arr = []
+    let len = uint.decode(state)
+    while (len-- > 0) {
+      arr.push(any.decode(state))
+    }
+    return arr
+  }
+}
+
+const anyObject = {
+  preencode (state, o) {
+    const keys = Object.keys(o)
+    uint.preencode(state, keys.length)
+    for (const key of keys) {
+      utf8.preencode(state, key)
+      any.preencode(state, o[key])
+    }
+  },
+  encode (state, o) {
+    const keys = Object.keys(o)
+    uint.encode(state, keys.length)
+    for (const key of keys) {
+      utf8.encode(state, key)
+      any.encode(state, o[key])
+    }
+  },
+  decode (state) {
+    let len = uint.decode(state)
+    const o = {}
+    while (len-- > 0) {
+      const key = utf8.decode(state)
+      o[key] = any.decode(state)
+    }
+    return o
+  }
+}
+
+const anyTypes = [
+  exports.none,
+  exports.bool,
+  exports.string,
+  exports.buffer,
+  exports.uint,
+  exports.int,
+  exports.float64,
+  anyArray,
+  anyObject
+]
+
+const any = exports.any = {
+  preencode (state, o) {
+    const t = getType(o)
+    uint.preencode(state, t)
+    anyTypes[t].preencode(state, o)
+  },
+  encode (state, o) {
+    const t = getType(o)
+    uint.encode(state, t)
+    anyTypes[t].encode(state, o)
+  },
+  decode (state) {
+    const t = uint.decode(state)
+    if (t >= anyTypes.length) throw new Error('Unknown type: ' + t)
+    return anyTypes[t].decode(state)
+  }
+}
+
+function getType (o) {
+  if (o === null || o === undefined) return 0
+  if (typeof o === 'boolean') return 1
+  if (typeof o === 'string') return 2
+  if (b4a.isBuffer(o)) return 3
+  if (typeof o === 'number') {
+    if (Number.isInteger(o)) return o >= 0 ? 4 : 5
+    return 6
+  }
+  if (Array.isArray(o)) return 7
+  if (typeof o === 'object') return 8
+
+  throw new Error('Unsupported type for ' + o)
 }
 
 exports.from = function from (enc) {
