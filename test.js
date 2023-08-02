@@ -669,5 +669,13 @@ test('any', function (t) {
 
   const arr = new Array(3)
 
-  t.alike(enc.decode(enc.any, enc.encode(enc.any, arr)), [null, null, null])
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, arr)), [undefined, undefined, undefined])
+})
+
+test('any: null vs undefined', function (t) {
+  let o
+  o = null
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, o)), null)
+  o = undefined
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, o)), undefined)
 })

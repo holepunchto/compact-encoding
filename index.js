@@ -402,8 +402,8 @@ exports.ndjson = {
   }
 }
 
-// simple helper for when you want to just express nothing
-exports.none = {
+// simple helpers for when you want to just express null or undefined
+exports.none_null = {
   preencode (state, n) {
     // do nothing
   },
@@ -412,6 +412,17 @@ exports.none = {
   },
   decode (state) {
     return null
+  }
+}
+exports.none_undefined = {
+  preencode (state, n) {
+    // do nothing
+  },
+  encode (state, n) {
+    // do nothing
+  },
+  decode (state) {
+    return undefined
   }
 }
 
@@ -469,7 +480,8 @@ const anyObject = {
 }
 
 const anyTypes = [
-  exports.none,
+  exports.none_null,
+  exports.none_undefined,
   exports.bool,
   exports.string,
   exports.buffer,
@@ -499,16 +511,17 @@ const any = exports.any = {
 }
 
 function getType (o) {
-  if (o === null || o === undefined) return 0
-  if (typeof o === 'boolean') return 1
-  if (typeof o === 'string') return 2
-  if (b4a.isBuffer(o)) return 3
+  if (o === null) return 0
+  if (o === undefined) return 1
+  if (typeof o === 'boolean') return 2
+  if (typeof o === 'string') return 3
+  if (b4a.isBuffer(o)) return 4
   if (typeof o === 'number') {
-    if (Number.isInteger(o)) return o >= 0 ? 4 : 5
-    return 6
+    if (Number.isInteger(o)) return o >= 0 ? 5 : 6
+    return 7
   }
-  if (Array.isArray(o)) return 7
-  if (typeof o === 'object') return 8
+  if (Array.isArray(o)) return 8
+  if (typeof o === 'object') return 9
 
   throw new Error('Unsupported type for ' + o)
 }
