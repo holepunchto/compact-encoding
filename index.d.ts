@@ -6,8 +6,8 @@ declare module 'compact-encoding' {
   export const raw: typeof rawModule;
   /** Encodes an int using lexicographic-integer encoding so that encoded values are lexicographically sorted in ascending numerical order. */
   export const lexint: typeof lexintModule;
-  type JSONLiteral = string | number | boolean | null;
 
+  type JSONLiteral = string | number | boolean | null;
   type JSONObject = {[x: string]: JSONValue};
   type JSONArray = Array<JSONValue>;
   export type JSONValue = JSONLiteral | JSONObject | JSONArray;
@@ -170,10 +170,13 @@ declare module 'compact-encoding' {
   export function from(name: 'binary' | (string & {})): typeof rawModule.binary;
 
   export function encode<T, I = T>(
-    enc: CEncoding<T, I>,
+    enc: CEncoding<T, I, I>,
     value: I,
   ): Buffer | Uint8Array;
-  export function decode<T>(enc: CEncoding<T>, buffer: Buffer | Uint8Array): T;
+  export function decode<T>(
+    enc: CEncoding<T, unknown, unknown>,
+    buffer: Buffer | Uint8Array,
+  ): T;
 }
 
 declare module 'compact-encoding/raw' {
