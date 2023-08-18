@@ -30,19 +30,21 @@ declare module 'compact-encoding' {
     decode(state: State): T;
   };
   export type InferCEncoding<E extends CEncoding<any>> = E extends CEncoding<
-    infer T
+    infer T,
+    infer I,
+    infer P
   >
-    ? T
+    ? {T: T; I: I; P: P}
     : never;
   export type BufferCEncoding = CEncoding<
     Buffer | Uint8Array | null,
     Buffer | Uint8Array | null,
-    Buffer | Uint8Array | void
+    Buffer | Uint8Array | null | void
   >;
   export type BinaryCEncoding = CEncoding<
     Buffer | Uint8Array | null,
     Buffer | Uint8Array | string | null,
-    Buffer | Uint8Array | string | void
+    Buffer | Uint8Array | string | null | void
   >;
   export type FixedNumberCEncoding = CEncoding<number, number, number | void>;
   export type FixedStringCEncoding = CEncoding<string> & {
@@ -135,7 +137,11 @@ declare module 'compact-encoding' {
   /** Makes an array encoder from another encoder. Arrays are uint prefixed with their length. */
   export function array<E extends CEncoding<any>>(
     enc: E,
-  ): CEncoding<InferCEncoding<E>[]>;
+  ): CEncoding<
+    InferCEncoding<E>['T'][],
+    InferCEncoding<E>['I'][],
+    InferCEncoding<E>['P'][]
+  >;
   /** Encodes a JSON value as utf-8. */
   export const json: CEncoding<JSONValue>;
   /** Encodes a JSON value as newline delimited utf-8. */
@@ -169,14 +175,14 @@ declare module 'compact-encoding' {
   export function from(name: 'json'): typeof rawModule.json;
   export function from(name: 'binary' | (string & {})): typeof rawModule.binary;
 
-  export function encode<T, I = T>(
-    enc: CEncoding<T, I, I>,
-    value: I,
+  export function encode<C extends CEncoding<any>>(
+    enc: C,
+    value: InferCEncoding<C>['I'],
   ): Buffer | Uint8Array;
-  export function decode<T>(
-    enc: CEncoding<T, unknown, unknown>,
+  export function decode<C extends CEncoding<any>>(
+    enc: C,
     buffer: Buffer | Uint8Array,
-  ): T;
+  ): InferCEncoding<C>['T'];
 }
 
 declare module 'compact-encoding/raw' {
