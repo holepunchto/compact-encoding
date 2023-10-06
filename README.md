@@ -94,7 +94,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.int48` - Encodes a fixed size int48 using `cenc.uint48` with ZigZag encoding.
 * `cenc.int56` - Encodes a fixed size int56 using `cenc.uint56` with ZigZag encoding.
 * `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
-* `cenc.lexint` - Encodes an int using [lexicographic-integer](https://github.com/substack/lexicographic-integer) encoding so that encoded values are lexicographically sorted in ascending numerical order.
+* `cenc.lexint` - Encodes an int using [lexicographic-integer](https://www.npmjs.com/package/lexicographic-integer) encoding so that encoded values are lexicographically sorted in ascending numerical order.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
