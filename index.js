@@ -394,9 +394,12 @@ exports.framed = function framed (enc) {
       enc.encode(state, m)
     },
     decode (state) {
-      const start = state.start + uint.decode(state)
+      const end = state.end
+      const len = uint.decode(state)
+      state.end = state.start + len
       const m = enc.decode(state)
-      state.start = start
+      state.start = state.end
+      state.end = end
       return m
     }
   }
