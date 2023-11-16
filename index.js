@@ -378,6 +378,30 @@ exports.array = function array (enc) {
   }
 }
 
+exports.framed = function framed (enc) {
+  const dummy = exports.state()
+
+  return {
+    preencode (state, m) {
+      const end = state.end
+      enc.preencode(state, m)
+      uint.preencode(state, state.end - end)
+    },
+    encode (state, m) {
+      dummy.end = 0
+      enc.preencode(dummy, m)
+      uint.encode(state, dummy.end)
+      enc.encode(state, m)
+    },
+    decode (state) {
+      const start = state.start + uint.decode(state)
+      const m = enc.decode(state)
+      state.start = start
+      return m
+    }
+  }
+}
+
 exports.json = {
   preencode (state, v) {
     utf8.preencode(state, JSON.stringify(v))
