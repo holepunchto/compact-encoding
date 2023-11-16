@@ -378,7 +378,7 @@ exports.array = function array (enc) {
   }
 }
 
-exports.framed = function framed (enc) {
+exports.frame = function frame (enc) {
   const dummy = exports.state()
 
   return {

@@ -673,7 +673,7 @@ test('any', function (t) {
 })
 
 test('framed', function (t) {
-  const e = enc.framed(enc.uint)
+  const e = enc.frame(enc.uint)
   t.alike(enc.encode(e, 42), b4a.from([0x01, 0x2a]))
   t.alike(enc.decode(e, b4a.from([0x01, 0x2a])), 42)
   t.alike(enc.encode(e, 4200), b4a.from([0x03, 0xfd, 0x68, 0x10]))
