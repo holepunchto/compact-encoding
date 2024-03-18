@@ -173,6 +173,34 @@ test('buffer', function (t) {
   t.exception(() => enc.buffer.decode(state))
 })
 
+test('arraybuffer', function (t) {
+  const state = enc.state()
+
+  const b1 = new ArrayBuffer(4)
+  b4a.from(b1).fill('a')
+
+  const b2 = new ArrayBuffer(8)
+  b4a.from(b2).fill('b')
+
+  enc.arraybuffer.preencode(state, b1)
+  t.alike(state, enc.state(0, 5))
+  enc.arraybuffer.preencode(state, b2)
+  t.alike(state, enc.state(0, 14))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.arraybuffer.encode(state, b1)
+  t.alike(state, enc.state(5, 14, b4a.from('\x04aaaa\x00\x00\x00\x00\x00\x00\x00\x00\x00')))
+  enc.arraybuffer.encode(state, b2)
+  t.alike(state, enc.state(14, 14, b4a.from('\x04aaaa\x08bbbbbbbb')))
+
+  state.start = 0
+  t.alike(enc.arraybuffer.decode(state), b1)
+  t.alike(enc.arraybuffer.decode(state), b2)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.arraybuffer.decode(state))
+})
+
 test('raw', function (t) {
   const state = enc.state()
 
