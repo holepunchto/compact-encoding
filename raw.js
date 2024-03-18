@@ -46,6 +46,28 @@ exports.binary = {
   }
 }
 
+exports.arraybuffer = {
+  preencode (state, b) {
+    state.end += b.byteLength
+  },
+  encode (state, b) {
+    const view = new Uint8Array(b)
+
+    state.buffer.set(view, state.start)
+    state.start += b.byteLength
+  },
+  decode (state) {
+    const b = new ArrayBuffer(state.end - state.start)
+    const view = new Uint8Array(b)
+
+    view.set(state.buffer.subarray(state.start))
+
+    state.start = state.end
+
+    return b
+  }
+}
+
 function typedarray (TypedArray, swap) {
   const n = TypedArray.BYTES_PER_ELEMENT
 

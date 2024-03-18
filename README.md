@@ -99,6 +99,8 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
 * `cenc.raw.buffer` - Encodes a buffer without a length prefixed.
+* `cenc.arraybuffer` - Encodes an arraybuffer with its length uint prefixed.
+* `cenc.raw.arraybuffer` - Encodes an arraybuffer without a length prefixed.
 * `cenc.uint8array` - Encodes a uint8array with its element length uint prefixed.
 * `cenc.raw.uint8array` - Encodes a uint8array without a length prefixed.
 * `cenc.uint16array` - Encodes a uint16array with its element length uint prefixed.
