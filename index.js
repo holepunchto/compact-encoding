@@ -164,15 +164,65 @@ const uint64 = exports.uint64 = {
   }
 }
 
-exports.int = zigZag(uint)
-exports.int8 = zigZag(uint8)
-exports.int16 = zigZag(uint16)
-exports.int24 = zigZag(uint24)
-exports.int32 = zigZag(uint32)
-exports.int40 = zigZag(uint40)
-exports.int48 = zigZag(uint48)
-exports.int56 = zigZag(uint56)
-exports.int64 = zigZag(uint64)
+exports.int = zigZagInt(uint)
+exports.int8 = zigZagInt(uint8)
+exports.int16 = zigZagInt(uint16)
+exports.int24 = zigZagInt(uint24)
+exports.int32 = zigZagInt(uint32)
+exports.int40 = zigZagInt(uint40)
+exports.int48 = zigZagInt(uint48)
+exports.int56 = zigZagInt(uint56)
+exports.int64 = zigZagInt(uint64)
+
+const biguint64 = exports.biguint64 = {
+  preencode (state, n) {
+    state.end += 8
+  },
+  encode (state, n) {
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
+    view.setBigUint64(0, n, true) // little endian
+    state.start += 8
+  },
+  decode (state) {
+    if (state.end - state.start < 8) throw new Error('Out of bounds')
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
+    const n = view.getBigUint64(0, true) // little endian
+    state.start += 8
+    return n
+  }
+}
+
+exports.bigint64 = zigZagBigInt(biguint64)
+
+const biguint = exports.biguint = {
+  preencode (state, n) {
+    let len = 0
+    for (let m = n; m; m = m >> 64n) len++
+    uint.preencode(state, len)
+    state.end += 8 * len
+  },
+  encode (state, n) {
+    let len = 0
+    for (let m = n; m; m = m >> 64n) len++
+    uint.encode(state, len)
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
+    for (let m = n, i = 0; m; m = m >> 64n, i += 8) {
+      view.setBigUint64(i, BigInt.asUintN(64, m), true) // little endian
+    }
+    state.start += 8 * len
+  },
+  decode (state) {
+    const len = uint.decode(state)
+    if (state.end - state.start < 8 * len) throw new Error('Out of bounds')
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
+    let n = 0n
+    for (let i = len - 1; i >= 0; i--) n = (n << 64n) + view.getBigUint64(i * 8, true) // little endian
+    state.start += 8 * len
+    return n
+  }
+}
+
+exports.bigint = zigZagBigInt(biguint)
 
 exports.lexint = require('./lexint')
 
@@ -241,6 +291,31 @@ exports.binary = {
   }
 }
 
+exports.arraybuffer = {
+  preencode (state, b) {
+    uint.preencode(state, b.byteLength)
+    state.end += b.byteLength
+  },
+  encode (state, b) {
+    uint.encode(state, b.byteLength)
+
+    const view = new Uint8Array(b)
+
+    state.buffer.set(view, state.start)
+    state.start += b.byteLength
+  },
+  decode (state) {
+    const len = uint.decode(state)
+
+    const b = new ArrayBuffer(len)
+    const view = new Uint8Array(b)
+
+    view.set(state.buffer.subarray(state.start, state.start += len))
+
+    return b
+  }
+}
+
 function typedarray (TypedArray, swap) {
   const n = TypedArray.BYTES_PER_ELEMENT
 
@@ -280,6 +355,9 @@ exports.uint32array = typedarray(Uint32Array, b4a.swap32)
 exports.int8array = typedarray(Int8Array)
 exports.int16array = typedarray(Int16Array, b4a.swap16)
 exports.int32array = typedarray(Int32Array, b4a.swap32)
+
+exports.biguint64array = typedarray(BigUint64Array, b4a.swap64)
+exports.bigint64array = typedarray(BigInt64Array, b4a.swap64)
 
 exports.float32array = typedarray(Float32Array, b4a.swap32)
 exports.float64array = typedarray(Float64Array, b4a.swap64)
@@ -374,6 +452,33 @@ exports.array = function array (enc) {
       const arr = new Array(len)
       for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
       return arr
+    }
+  }
+}
+
+exports.frame = function frame (enc) {
+  const dummy = exports.state()
+
+  return {
+    preencode (state, m) {
+      const end = state.end
+      enc.preencode(state, m)
+      uint.preencode(state, state.end - end)
+    },
+    encode (state, m) {
+      dummy.end = 0
+      enc.preencode(dummy, m)
+      uint.encode(state, dummy.end)
+      enc.encode(state, m)
+    },
+    decode (state) {
+      const end = state.end
+      const len = uint.decode(state)
+      state.end = state.start + len
+      const m = enc.decode(state)
+      state.start = state.end
+      state.end = end
+      return m
     }
   }
 }
@@ -587,25 +692,48 @@ exports.decode = function decode (enc, buffer) {
   return enc.decode(exports.state(0, buffer.byteLength, buffer))
 }
 
-function zigZag (enc) {
+function zigZagInt (enc) {
   return {
     preencode (state, n) {
-      enc.preencode(state, zigZagEncode(n))
+      enc.preencode(state, zigZagEncodeInt(n))
     },
     encode (state, n) {
-      enc.encode(state, zigZagEncode(n))
+      enc.encode(state, zigZagEncodeInt(n))
     },
     decode (state) {
-      return zigZagDecode(enc.decode(state))
+      return zigZagDecodeInt(enc.decode(state))
     }
   }
 }
 
-function zigZagDecode (n) {
+function zigZagDecodeInt (n) {
   return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
 }
 
-function zigZagEncode (n) {
+function zigZagEncodeInt (n) {
   // 0, -1, 1, -2, 2, ...
   return n < 0 ? (2 * -n) - 1 : n === 0 ? 0 : 2 * n
+}
+
+function zigZagBigInt (enc) {
+  return {
+    preencode (state, n) {
+      enc.preencode(state, zigZagEncodeBigInt(n))
+    },
+    encode (state, n) {
+      enc.encode(state, zigZagEncodeBigInt(n))
+    },
+    decode (state) {
+      return zigZagDecodeBigInt(enc.decode(state))
+    }
+  }
+}
+
+function zigZagDecodeBigInt (n) {
+  return n === 0n ? n : (n & 1n) === 0n ? n / 2n : -(n + 1n) / 2n
+}
+
+function zigZagEncodeBigInt (n) {
+  // 0, -1, 1, -2, 2, ...
+  return n < 0n ? (2n * -n) - 1n : n === 0n ? 0n : 2n * n
 }

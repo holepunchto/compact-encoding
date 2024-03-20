@@ -46,6 +46,28 @@ exports.binary = {
   }
 }
 
+exports.arraybuffer = {
+  preencode (state, b) {
+    state.end += b.byteLength
+  },
+  encode (state, b) {
+    const view = new Uint8Array(b)
+
+    state.buffer.set(view, state.start)
+    state.start += b.byteLength
+  },
+  decode (state) {
+    const b = new ArrayBuffer(state.end - state.start)
+    const view = new Uint8Array(b)
+
+    view.set(state.buffer.subarray(state.start))
+
+    state.start = state.end
+
+    return b
+  }
+}
+
 function typedarray (TypedArray, swap) {
   const n = TypedArray.BYTES_PER_ELEMENT
 
@@ -81,6 +103,9 @@ exports.uint32array = typedarray(Uint32Array, b4a.swap32)
 exports.int8array = typedarray(Int8Array)
 exports.int16array = typedarray(Int16Array, b4a.swap16)
 exports.int32array = typedarray(Int32Array, b4a.swap32)
+
+exports.biguint64array = typedarray(BigUint64Array, b4a.swap64)
+exports.bigint64array = typedarray(BigInt64Array, b4a.swap64)
 
 exports.float32array = typedarray(Float32Array, b4a.swap32)
 exports.float64array = typedarray(Float64Array, b4a.swap64)

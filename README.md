@@ -94,11 +94,16 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.int48` - Encodes a fixed size int48 using `cenc.uint48` with ZigZag encoding.
 * `cenc.int56` - Encodes a fixed size int56 using `cenc.uint56` with ZigZag encoding.
 * `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
-* `cenc.lexint` - Encodes an int using [lexicographic-integer](https://www.npmjs.com/package/lexicographic-integer) encoding so that encoded values are lexicographically sorted in ascending numerical order.
+* `cenc.biguint64` - Encodes a fixed size biguint64.
+* `cenc.bigint64` - Encodes a fixed size bigint64 using `cenc.biguint64` with ZigZag encoding.
+* `cenc.biguint` - Encodes a biguint with its word count uint prefixed.
+* `cenc.bigint` - Encodes a bigint using `cenc.biguint` with ZigZag encoding.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
 * `cenc.raw.buffer` - Encodes a buffer without a length prefixed.
+* `cenc.arraybuffer` - Encodes an arraybuffer with its length uint prefixed.
+* `cenc.raw.arraybuffer` - Encodes an arraybuffer without a length prefixed.
 * `cenc.uint8array` - Encodes a uint8array with its element length uint prefixed.
 * `cenc.raw.uint8array` - Encodes a uint8array without a length prefixed.
 * `cenc.uint16array` - Encodes a uint16array with its element length uint prefixed.
@@ -111,6 +116,10 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.raw.int16array` - Encodes a int16array without a length prefixed.
 * `cenc.int32array` - Encodes a int32array with its element length uint prefixed.
 * `cenc.raw.int32array` - Encodes a int32array without a length prefixed.
+* `cenc.biguint64array` - Encodes a biguint64array with its element length uint prefixed.
+* `cenc.raw.biguint64array` - Encodes a biguint64array without a length prefixed.
+* `cenc.bigint64array` - Encodes a bigint64array with its element length uint prefixed.
+* `cenc.raw.bigint64array` - Encodes a bigint64array without a length prefixed.
 * `cenc.float32array` - Encodes a float32array with its element length uint prefixed.
 * `cenc.raw.float32array` - Encodes a float32array without a length prefixed.
 * `cenc.float64array` - Encodes a float64array with its element length uint prefixed.
@@ -142,6 +151,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.raw.ndjson` - Encodes a JSON value as newline delimited utf-8 without a length prefixed.
 * `cenc.any` - Encodes any JSON representable value into a self described buffer. Like JSON + buffer, but using compact types. Useful for schemaless codecs.
 * `cenc.from(enc)` - Makes a compact encoder from a [codec](https://github.com/mafintosh/codecs) or [abstract-encoding](https://github.com/mafintosh/abstract-encoding).
+* `cenc.none` - Helper for when you want to just express nothing
 
 ## License
 
