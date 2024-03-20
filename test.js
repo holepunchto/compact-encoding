@@ -162,7 +162,7 @@ test('biguint64', function (t) {
   t.is(enc.biguint64.decode(state), n)
   t.is(state.start, state.end)
 
-  t.exception(() => enc.buffer.decode(state))
+  t.exception(() => enc.biguint64.decode(state))
 })
 
 test('bigint64', function (t) {
@@ -181,7 +181,7 @@ test('bigint64', function (t) {
   t.is(enc.bigint64.decode(state), n)
   t.is(state.start, state.end)
 
-  t.exception(() => enc.buffer.decode(state))
+  t.exception(() => enc.bigint64.decode(state))
 })
 
 test('biguint', function (t) {
