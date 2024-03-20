@@ -146,6 +146,82 @@ test('float64', function (t) {
   t.is(state.start, state.end)
 })
 
+test('biguint64', function (t) {
+  const state = enc.state()
+
+  const n = 0x0102030405060708n
+
+  enc.biguint64.preencode(state, n)
+  t.alike(state, enc.state(0, 8))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.biguint64.encode(state, n)
+  t.alike(state, enc.state(8, 8, b4a.from([0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1])))
+
+  state.start = 0
+  t.is(enc.biguint64.decode(state), n)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.buffer.decode(state))
+})
+
+test('bigint64', function (t) {
+  const state = enc.state()
+
+  const n = -0x0102030405060708n
+
+  enc.bigint64.preencode(state, n)
+  t.alike(state, enc.state(0, 8))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.bigint64.encode(state, n)
+  t.alike(state, enc.state(8, 8, b4a.from([0xf, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2])))
+
+  state.start = 0
+  t.is(enc.bigint64.decode(state), n)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.buffer.decode(state))
+})
+
+test('biguint', function (t) {
+  const state = enc.state()
+
+  const n = 0x0102030405060708090a0b0cn
+
+  enc.biguint.preencode(state, n)
+  t.alike(state, enc.state(0, 17))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.biguint.encode(state, n)
+  t.alike(state, enc.state(17, 17, b4a.from([2, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0])))
+
+  state.start = 0
+  t.is(enc.biguint.decode(state), n)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.biguint.decode(state))
+})
+
+test('bigint', function (t) {
+  const state = enc.state()
+
+  const n = -0x0102030405060708090a0b0cn
+
+  enc.bigint.preencode(state, n)
+  t.alike(state, enc.state(0, 17))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.bigint.encode(state, n)
+  t.alike(state, enc.state(17, 17, b4a.from([2, 0x17, 0x16, 0x14, 0x12, 0x10, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2, 0x0, 0x0, 0x0, 0x0])))
+
+  state.start = 0
+  t.is(enc.bigint.decode(state), n)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.bigint.decode(state))
+})
+
 test('buffer', function (t) {
   const state = enc.state()
 
@@ -306,6 +382,44 @@ test('int32array', function (t) {
   t.is(state.start, state.end)
 
   t.exception(() => enc.int32array.decode(state))
+})
+
+test('biguint64array', function (t) {
+  const state = enc.state()
+
+  const arr = new BigUint64Array([0x01020304n, 0x05060708n, 0x090a0b0cn])
+
+  enc.biguint64array.preencode(state, arr)
+  t.alike(state, enc.state(0, 25))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.biguint64array.encode(state, arr)
+  t.alike(state, enc.state(25, 25, b4a.from([3, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0, 0x8, 0x7, 0x6, 0x5, 0x0, 0x0, 0x0, 0x0, 0xc, 0xb, 0xa, 0x9, 0x0, 0x0, 0x0, 0x0])))
+
+  state.start = 0
+  t.alike(enc.biguint64array.decode(state), arr)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.biguint64array.decode(state))
+})
+
+test('bigint64array', function (t) {
+  const state = enc.state()
+
+  const arr = new BigInt64Array([-0x01020304n, 0x05060708n, -0x090a0b0cn])
+
+  enc.bigint64array.preencode(state, arr)
+  t.alike(state, enc.state(0, 25))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.bigint64array.encode(state, arr)
+  t.alike(state, enc.state(25, 25, b4a.from([3, 0xfc, 0xfc, 0xfd, 0xfe, 0xff, 0xff, 0xff, 0xff, 0x8, 0x7, 0x6, 0x5, 0x0, 0x0, 0x0, 0x0, 0xf4, 0xf4, 0xf5, 0xf6, 0xff, 0xff, 0xff, 0xff])))
+
+  state.start = 0
+  t.alike(enc.bigint64array.decode(state), arr)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.bigint64array.decode(state))
 })
 
 test('float32array', function (t) {
