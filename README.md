@@ -98,7 +98,6 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.bigint64` - Encodes a fixed size bigint64 using `cenc.biguint64` with ZigZag encoding.
 * `cenc.biguint` - Encodes a biguint with its word count uint prefixed.
 * `cenc.bigint` - Encodes a bigint using `cenc.biguint` with ZigZag encoding.
-* `cenc.lexint` - Encodes an int using [lexicographic-integer](https://github.com/substack/lexicographic-integer) encoding so that encoded values are lexicographically sorted in ascending numerical order.
 * `cenc.float32` - Encodes a fixed size float32.
 * `cenc.float64` - Encodes a fixed size float64.
 * `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
