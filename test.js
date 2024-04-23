@@ -804,6 +804,7 @@ test('any', function (t) {
     neg: -42,
     arr: [{ yes: 1 }, { no: false }],
     nest: {},
+    today: new Date(),
     float: 0.54
   }
 

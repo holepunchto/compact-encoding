@@ -573,6 +573,19 @@ const anyObject = {
   }
 }
 
+const anyDate = {
+  preencode (state, o) {
+    utf8.preencode(state, o.toISOString())
+  },
+  encode (state, o) {
+    utf8.encode(state, o.toISOString())
+  },
+  decode (state) {
+    const isoString = utf8.decode(state)
+    return new Date(isoString)
+  }
+}
+
 const anyTypes = [
   exports.none,
   exports.bool,
@@ -582,7 +595,8 @@ const anyTypes = [
   exports.int,
   exports.float64,
   anyArray,
-  anyObject
+  anyObject,
+  anyDate
 ]
 
 const any = exports.any = {
@@ -613,6 +627,7 @@ function getType (o) {
     return 6
   }
   if (Array.isArray(o)) return 7
+  if (o instanceof Date) return 9
   if (typeof o === 'object') return 8
 
   throw new Error('Unsupported type for ' + o)
