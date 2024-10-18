@@ -565,6 +565,19 @@ test('fixed n', function (t) {
   t.exception(() => fixed.decode(state))
 })
 
+test('error for incorrect buffer sizes when encoding fixed-length buffers', function (t) {
+  const smallbuf = b4a.from('aa', 'hex')
+  const bigBuf = b4a.from('aa'.repeat(500), 'hex')
+
+  t.exception(() => enc.encode(enc.fixed32, smallbuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed64, smallbuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed(100), smallbuf), /Incorrect buffer size/)
+
+  t.exception(() => enc.encode(enc.fixed32, bigBuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed64, bigBuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed(100), bigBuf), /Incorrect buffer size/)
+})
+
 test('array', function (t) {
   const state = enc.state()
   const arr = enc.array(enc.bool)
