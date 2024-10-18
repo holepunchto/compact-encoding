@@ -342,6 +342,7 @@ exports.bool = {
 const fixed = exports.fixed = function fixed (n) {
   return {
     preencode (state, s) {
+      if (s.byteLength !== n) throw new Error('Incorrect buffer size')
       state.end += n
     },
     encode (state, s) {
