@@ -39,6 +39,7 @@ const uint8 = exports.uint8 = {
     state.end += 1
   },
   encode (state, n) {
+    validateUint(n)
     state.buffer[state.start++] = n
   },
   decode (state) {
@@ -52,6 +53,7 @@ const uint16 = exports.uint16 = {
     state.end += 2
   },
   encode (state, n) {
+    validateUint(n)
     state.buffer[state.start++] = n
     state.buffer[state.start++] = n >>> 8
   },
@@ -69,6 +71,7 @@ const uint24 = exports.uint24 = {
     state.end += 3
   },
   encode (state, n) {
+    validateUint(n)
     state.buffer[state.start++] = n
     state.buffer[state.start++] = n >>> 8
     state.buffer[state.start++] = n >>> 16
@@ -88,6 +91,7 @@ const uint32 = exports.uint32 = {
     state.end += 4
   },
   encode (state, n) {
+    validateUint(n)
     state.buffer[state.start++] = n
     state.buffer[state.start++] = n >>> 8
     state.buffer[state.start++] = n >>> 16
@@ -109,6 +113,7 @@ const uint40 = exports.uint40 = {
     state.end += 5
   },
   encode (state, n) {
+    validateUint(n)
     const r = Math.floor(n / 0x100)
     uint8.encode(state, n)
     uint32.encode(state, r)
@@ -124,6 +129,7 @@ const uint48 = exports.uint48 = {
     state.end += 6
   },
   encode (state, n) {
+    validateUint(n)
     const r = Math.floor(n / 0x10000)
     uint16.encode(state, n)
     uint32.encode(state, r)
@@ -139,6 +145,7 @@ const uint56 = exports.uint56 = {
     state.end += 7
   },
   encode (state, n) {
+    validateUint(n)
     const r = Math.floor(n / 0x1000000)
     uint24.encode(state, n)
     uint32.encode(state, r)
@@ -154,6 +161,7 @@ const uint64 = exports.uint64 = {
     state.end += 8
   },
   encode (state, n) {
+    validateUint(n)
     const r = Math.floor(n / 0x100000000)
     uint32.encode(state, n)
     uint32.encode(state, r)
@@ -737,4 +745,8 @@ function zigZagDecodeBigInt (n) {
 function zigZagEncodeBigInt (n) {
   // 0, -1, 1, -2, 2, ...
   return n < 0n ? (2n * -n) - 1n : n === 0n ? 0n : 2n * n
+}
+
+function validateUint (n) {
+  if ((n >= 0) === false /* Handles NaN as well */) throw new Error('uint must be positive')
 }
