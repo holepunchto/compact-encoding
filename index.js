@@ -748,5 +748,5 @@ function zigZagEncodeBigInt (n) {
 }
 
 function validateUint (n) {
-  if (!(n >= 0)) throw new Error('uint must be positive')
+  if ((n >= 0) === false) throw new Error('uint must be positive')
 }
