@@ -492,6 +492,18 @@ exports.frame = function frame (enc) {
   }
 }
 
+exports.date = {
+  preencode (state, d) {
+    uint.preencode(state, d.getTime())
+  },
+  encode (state, d) {
+    uint.encode(state, d.getTime())
+  },
+  decode (state, d) {
+    return new Date(uint.decode(state))
+  }
+}
+
 exports.json = {
   preencode (state, v) {
     utf8.preencode(state, JSON.stringify(v))
@@ -591,7 +603,8 @@ const anyTypes = [
   exports.int,
   exports.float64,
   anyArray,
-  anyObject
+  anyObject,
+  exports.date
 ]
 
 const any = exports.any = {
@@ -622,6 +635,7 @@ function getType (o) {
     return 6
   }
   if (Array.isArray(o)) return 7
+  if (o instanceof Date) return 9
   if (typeof o === 'object') return 8
 
   throw new Error('Unsupported type for ' + o)

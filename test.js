@@ -810,6 +810,12 @@ test('lexint: unpack', function (t) {
   }
 })
 
+test('date', function (t) {
+  const d = new Date()
+
+  t.alike(enc.decode(enc.date, enc.encode(enc.date, d)), d)
+})
+
 test('any', function (t) {
   const o = {
     hello: 'world',
@@ -817,6 +823,7 @@ test('any', function (t) {
     neg: -42,
     arr: [{ yes: 1 }, { no: false }],
     nest: {},
+    today: new Date(),
     float: 0.54
   }
 

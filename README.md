@@ -143,6 +143,7 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.fixed32` - Encodes a fixed 32 byte buffer.
 * `cenc.fixed64` - Encodes a fixed 64 byte buffer.
 * `cenc.fixed(n)` - Makes a fixed sized encoder.
+* `cenc.date(d)` - Encodes a date object.
 * `cenc.array(enc)` - Makes an array encoder from another encoder. Arrays are uint prefixed with their length.
 * `cenc.raw.array(enc)` - Makes an array encoder from another encoder, without a length prefixed.
 * `cenc.json` - Encodes a JSON value as utf-8.
