@@ -824,7 +824,9 @@ test('any', function (t) {
     arr: [{ yes: 1 }, { no: false }],
     nest: {},
     today: new Date(),
-    float: 0.54
+    float: 0.54,
+    big: 42n,
+    bign: -42n
   }
 
   t.alike(enc.decode(enc.any, enc.encode(enc.any, o)), o)
