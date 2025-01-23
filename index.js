@@ -626,7 +626,7 @@ const any = exports.any = {
 }
 
 function getType (o) {
-  if (o === null || o === undefined) return 0
+  if (o === null || o === undefined || typeof o === 'function') return 0
   if (typeof o === 'boolean') return 1
   if (typeof o === 'string') return 2
   if (b4a.isBuffer(o)) return 3
