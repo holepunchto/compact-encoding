@@ -839,9 +839,7 @@ test('any function', function (t) {
     fn: function () {}
   }
 
-  t.alike(enc.decode(enc.any, enc.encode(enc.any, obj)), {
-    fn: null
-  })
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, obj)), {})
 
   const arr = [
     function () {}

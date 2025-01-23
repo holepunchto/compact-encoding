@@ -568,7 +568,7 @@ const anyArray = {
 
 const anyObject = {
   preencode (state, o) {
-    const keys = Object.keys(o)
+    const keys = objectKeysMinusFn(o)
     uint.preencode(state, keys.length)
     for (const key of keys) {
       utf8.preencode(state, key)
@@ -576,7 +576,7 @@ const anyObject = {
     }
   },
   encode (state, o) {
-    const keys = Object.keys(o)
+    const keys = objectKeysMinusFn(o)
     uint.encode(state, keys.length)
     for (const key of keys) {
       utf8.encode(state, key)
@@ -763,4 +763,13 @@ function zigZagEncodeBigInt (n) {
 
 function validateUint (n) {
   if ((n >= 0) === false /* Handles NaN as well */) throw new Error('uint must be positive')
+}
+
+function objectKeysMinusFn (o) {
+  const keys = []
+  for (const key in o) {
+    if (typeof o[key] === 'function') continue
+    keys.push(key)
+  }
+  return keys
 }
