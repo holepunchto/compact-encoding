@@ -834,6 +834,24 @@ test('any', function (t) {
   t.alike(enc.decode(enc.any, enc.encode(enc.any, arr)), [null, null, null])
 })
 
+test('any function', function (t) {
+  const obj = {
+    fn: function () {}
+  }
+
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, obj)), {
+    fn: null
+  })
+
+  const arr = [
+    function () {}
+  ]
+
+  t.alike(enc.decode(enc.any, enc.encode(enc.any, arr)), [
+    null
+  ])
+})
+
 test('framed', function (t) {
   const e = enc.frame(enc.uint)
   t.alike(enc.encode(e, 42), b4a.from([0x01, 0x2a]))
