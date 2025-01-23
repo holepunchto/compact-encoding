@@ -604,7 +604,9 @@ const anyTypes = [
   exports.float64,
   anyArray,
   anyObject,
-  exports.date
+  exports.date,
+  exports.biguint,
+  exports.bigint
 ]
 
 const any = exports.any = {
@@ -637,6 +639,9 @@ function getType (o) {
   if (Array.isArray(o)) return 7
   if (o instanceof Date) return 9
   if (typeof o === 'object') return 8
+  if (typeof o === 'bigint') {
+    return o >= 0n ? 10 : 11
+  }
 
   throw new Error('Unsupported type for ' + o)
 }
