@@ -172,7 +172,7 @@ const uint64 = exports.uint64 = {
   }
 }
 
-exports.int = zigZagInt(uint)
+const int = exports.int = zigZagInt(uint)
 exports.int8 = zigZagInt(uint8)
 exports.int16 = zigZagInt(uint16)
 exports.int24 = zigZagInt(uint24)
@@ -494,13 +494,13 @@ exports.frame = function frame (enc) {
 
 exports.date = {
   preencode (state, d) {
-    uint.preencode(state, d.getTime())
+    int.preencode(state, d.getTime())
   },
   encode (state, d) {
-    uint.encode(state, d.getTime())
+    int.encode(state, d.getTime())
   },
   decode (state, d) {
-    return new Date(uint.decode(state))
+    return new Date(int.decode(state))
   }
 }
 
