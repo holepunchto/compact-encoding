@@ -741,13 +741,13 @@ function zigZagEncodeInt (n) {
 function zigZagBigInt (enc) {
   return {
     preencode (state, n) {
-      enc.preencode(state, zigZagEncodeBigInt(n))
+      enc.preencode(state, zigZagEncodeBigInt(typeof n === 'bigint' ? n : BigInt(n)))
     },
     encode (state, n) {
-      enc.encode(state, zigZagEncodeBigInt(n))
+      enc.encode(state, zigZagEncodeBigInt(typeof n === 'bigint' ? n : BigInt(n)))
     },
     decode (state) {
-      return zigZagDecodeBigInt(enc.decode(state))
+      return BigInt(zigZagDecodeBigInt(enc.decode(state)))
     }
   }
 }
