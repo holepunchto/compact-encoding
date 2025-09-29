@@ -76,7 +76,7 @@ The following encodings are bundled as they are primitives that can be used
 to build others on top. Feel free to PR more that are missing.
 
 * `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
-* `cenc.uint` - Encodes a uint using [compact-uint](https://github.com/mafintosh/compact-uint).
+* `cenc.uint` - Encodes a uint using the smallest fixed size encoding with a prefix to signal which one. Useful for uints that can be a wide range of values.
 * `cenc.uint8` - Encodes a fixed size uint8.
 * `cenc.uint16` - Encodes a fixed size uint16. Useful for things like ports.
 * `cenc.uint24` - Encodes a fixed size uint24. Useful for message framing.
