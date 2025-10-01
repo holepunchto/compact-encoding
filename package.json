@@ -1,6 +1,6 @@
 {
   "name": "compact-encoding",
-  "version": "2.16.1",
+  "version": "2.17.0",
   "description": "A series of compact encoding schemes for building small and fast parsers and serializers",
   "main": "index.js",
   "dependencies": {
