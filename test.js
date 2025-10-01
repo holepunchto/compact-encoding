@@ -14,11 +14,24 @@ test('uint', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.uint.encode(state, 42)
-  t.alike(state, enc.state(1, 13, b4a.from([42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(
+    state,
+    enc.state(1, 13, b4a.from([42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+  )
   enc.uint.encode(state, 4200)
-  t.alike(state, enc.state(4, 13, b4a.from([42, 0xfd, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(
+    state,
+    enc.state(4, 13, b4a.from([42, 0xfd, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+  )
   enc.uint.encode(state, Number.MAX_SAFE_INTEGER)
-  t.alike(state, enc.state(13, 13, b4a.from([42, 0xfd, 104, 16, 0xff, 255, 255, 255, 255, 255, 255, 31, 0])))
+  t.alike(
+    state,
+    enc.state(
+      13,
+      13,
+      b4a.from([42, 0xfd, 104, 16, 0xff, 255, 255, 255, 255, 255, 255, 31, 0])
+    )
+  )
 
   state.start = 0
   t.is(enc.uint.decode(state), 42)
@@ -60,7 +73,10 @@ test('float64', function (t) {
   state.buffer = b4a.alloc(state.end)
   t.alike(state, enc.state(0, 8, b4a.from([0, 0, 0, 0, 0, 0, 0, 0])))
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(8, 8, b4a.from([0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(
+    state,
+    enc.state(8, 8, b4a.from([0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]))
+  )
 
   state.start = 0
   t.is(enc.float64.decode(state), 162.2377294)
@@ -81,7 +97,14 @@ test('float64', function (t) {
   t.alike(state, enc.state(0, 9, b4a.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.int.encode(state, 0)
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(9, 9, b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(
+    state,
+    enc.state(
+      9,
+      9,
+      b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])
+    )
+  )
 
   state.start = 0
   t.is(enc.int.decode(state), 0)
@@ -95,7 +118,14 @@ test('float64', function (t) {
   t.alike(state, enc.state(0, 9, b4a.from([0, 0, 0, 0, 0, 0, 0, 0, 0])))
   enc.int.encode(state, 0)
   enc.float64.encode(state, 162.2377294)
-  t.alike(state, enc.state(9, 9, b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])))
+  t.alike(
+    state,
+    enc.state(
+      9,
+      9,
+      b4a.from([0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40])
+    )
+  )
   t.alike(buf, b4a.from([0, 0, 0x87, 0xc9, 0xaf, 0x7a, 0x9b, 0x47, 0x64, 0x40]))
 
   state.start = 0
@@ -139,7 +169,10 @@ test('float64', function (t) {
   enc.float64.preencode(state, 0.1 + 0.2)
   state.buffer = b4a.alloc(state.end)
   enc.float64.encode(state, 0.1 + 0.2)
-  t.alike(state, enc.state(8, 8, b4a.from([0x34, 0x33, 0x33, 0x33, 0x33, 0x33, 0xd3, 0x3f])))
+  t.alike(
+    state,
+    enc.state(8, 8, b4a.from([0x34, 0x33, 0x33, 0x33, 0x33, 0x33, 0xd3, 0x3f]))
+  )
 
   state.start = 0
   t.is(enc.float64.decode(state), 0.1 + 0.2)
@@ -156,7 +189,10 @@ test('biguint64', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.biguint64.encode(state, n)
-  t.alike(state, enc.state(8, 8, b4a.from([0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1])))
+  t.alike(
+    state,
+    enc.state(8, 8, b4a.from([0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1]))
+  )
 
   state.start = 0
   t.is(enc.biguint64.decode(state), n)
@@ -175,7 +211,10 @@ test('bigint64', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.bigint64.encode(state, n)
-  t.alike(state, enc.state(8, 8, b4a.from([0xf, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2])))
+  t.alike(
+    state,
+    enc.state(8, 8, b4a.from([0xf, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2]))
+  )
 
   state.start = 0
   t.is(enc.bigint64.decode(state), n)
@@ -194,7 +233,17 @@ test('biguint', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.biguint.encode(state, n)
-  t.alike(state, enc.state(17, 17, b4a.from([2, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0])))
+  t.alike(
+    state,
+    enc.state(
+      17,
+      17,
+      b4a.from([
+        2, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0,
+        0x0, 0x0
+      ])
+    )
+  )
 
   state.start = 0
   t.is(enc.biguint.decode(state), n)
@@ -213,7 +262,17 @@ test('bigint', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.bigint.encode(state, n)
-  t.alike(state, enc.state(17, 17, b4a.from([2, 0x17, 0x16, 0x14, 0x12, 0x10, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2, 0x0, 0x0, 0x0, 0x0])))
+  t.alike(
+    state,
+    enc.state(
+      17,
+      17,
+      b4a.from([
+        2, 0x17, 0x16, 0x14, 0x12, 0x10, 0xe, 0xc, 0xa, 0x8, 0x6, 0x4, 0x2, 0x0,
+        0x0, 0x0, 0x0
+      ])
+    )
+  )
 
   state.start = 0
   t.is(enc.bigint.decode(state), n)
@@ -234,7 +293,10 @@ test('buffer', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.buffer.encode(state, b4a.from('hi'))
-  t.alike(state, enc.state(3, 10, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00')))
+  t.alike(
+    state,
+    enc.state(3, 10, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00'))
+  )
   enc.buffer.encode(state, b4a.from('hello'))
   t.alike(state, enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')))
   enc.buffer.encode(state, null)
@@ -265,7 +327,10 @@ test('arraybuffer', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.arraybuffer.encode(state, b1)
-  t.alike(state, enc.state(5, 14, b4a.from('\x04aaaa\x00\x00\x00\x00\x00\x00\x00\x00\x00')))
+  t.alike(
+    state,
+    enc.state(5, 14, b4a.from('\x04aaaa\x00\x00\x00\x00\x00\x00\x00\x00\x00'))
+  )
   enc.arraybuffer.encode(state, b2)
   t.alike(state, enc.state(14, 14, b4a.from('\x04aaaa\x08bbbbbbbb')))
 
@@ -338,9 +403,15 @@ test('uint32array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.uint32array.encode(state, new Uint32Array([1]))
-  t.alike(state, enc.state(5, 14, b4a.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+  t.alike(
+    state,
+    enc.state(5, 14, b4a.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+  )
   enc.uint32array.encode(state, new Uint32Array([42, 43]))
-  t.alike(state, enc.state(14, 14, b4a.from([1, 1, 0, 0, 0, 2, 42, 0, 0, 0, 43, 0, 0, 0])))
+  t.alike(
+    state,
+    enc.state(14, 14, b4a.from([1, 1, 0, 0, 0, 2, 42, 0, 0, 0, 43, 0, 0, 0]))
+  )
 
   state.start = 0
   t.alike(enc.uint32array.decode(state), new Uint32Array([1]))
@@ -375,7 +446,14 @@ test('int32array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.int32array.encode(state, new Int32Array([1, -2, 3]))
-  t.alike(state, enc.state(13, 13, b4a.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0])))
+  t.alike(
+    state,
+    enc.state(
+      13,
+      13,
+      b4a.from([3, 1, 0, 0, 0, 0xfe, 0xff, 0xff, 0xff, 3, 0, 0, 0])
+    )
+  )
 
   state.start = 0
   t.alike(enc.int32array.decode(state), new Int32Array([1, -2, 3]))
@@ -394,7 +472,17 @@ test('biguint64array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.biguint64array.encode(state, arr)
-  t.alike(state, enc.state(25, 25, b4a.from([3, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0, 0x8, 0x7, 0x6, 0x5, 0x0, 0x0, 0x0, 0x0, 0xc, 0xb, 0xa, 0x9, 0x0, 0x0, 0x0, 0x0])))
+  t.alike(
+    state,
+    enc.state(
+      25,
+      25,
+      b4a.from([
+        3, 0x4, 0x3, 0x2, 0x1, 0x0, 0x0, 0x0, 0x0, 0x8, 0x7, 0x6, 0x5, 0x0, 0x0,
+        0x0, 0x0, 0xc, 0xb, 0xa, 0x9, 0x0, 0x0, 0x0, 0x0
+      ])
+    )
+  )
 
   state.start = 0
   t.alike(enc.biguint64array.decode(state), arr)
@@ -413,7 +501,17 @@ test('bigint64array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.bigint64array.encode(state, arr)
-  t.alike(state, enc.state(25, 25, b4a.from([3, 0xfc, 0xfc, 0xfd, 0xfe, 0xff, 0xff, 0xff, 0xff, 0x8, 0x7, 0x6, 0x5, 0x0, 0x0, 0x0, 0x0, 0xf4, 0xf4, 0xf5, 0xf6, 0xff, 0xff, 0xff, 0xff])))
+  t.alike(
+    state,
+    enc.state(
+      25,
+      25,
+      b4a.from([
+        3, 0xfc, 0xfc, 0xfd, 0xfe, 0xff, 0xff, 0xff, 0xff, 0x8, 0x7, 0x6, 0x5,
+        0x0, 0x0, 0x0, 0x0, 0xf4, 0xf4, 0xf5, 0xf6, 0xff, 0xff, 0xff, 0xff
+      ])
+    )
+  )
 
   state.start = 0
   t.alike(enc.bigint64array.decode(state), arr)
@@ -430,7 +528,17 @@ test('float32array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.float32array.encode(state, new Float32Array([1.1, -2.2, 3.3]))
-  t.alike(state, enc.state(13, 13, b4a.from([3, 0xcd, 0xcc, 0x8c, 0x3f, 0xcd, 0xcc, 0x0c, 0xc0, 0x33, 0x33, 0x53, 0x40])))
+  t.alike(
+    state,
+    enc.state(
+      13,
+      13,
+      b4a.from([
+        3, 0xcd, 0xcc, 0x8c, 0x3f, 0xcd, 0xcc, 0x0c, 0xc0, 0x33, 0x33, 0x53,
+        0x40
+      ])
+    )
+  )
 
   state.start = 0
   t.alike(enc.float32array.decode(state), new Float32Array([1.1, -2.2, 3.3]))
@@ -447,7 +555,18 @@ test('float64array', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.float64array.encode(state, new Float64Array([1.1, -2.2, 3.3]))
-  t.alike(state, enc.state(25, 25, b4a.from([3, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0xf1, 0x3f, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0x01, 0xc0, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0a, 0x40])))
+  t.alike(
+    state,
+    enc.state(
+      25,
+      25,
+      b4a.from([
+        3, 0x9a, 0x99, 0x99, 0x99, 0x99, 0x99, 0xf1, 0x3f, 0x9a, 0x99, 0x99,
+        0x99, 0x99, 0x99, 0x01, 0xc0, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x0a,
+        0x40
+      ])
+    )
+  )
 
   state.start = 0
   t.alike(enc.float64array.decode(state), new Float64Array([1.1, -2.2, 3.3]))
@@ -466,7 +585,16 @@ test('string', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.string.encode(state, '🌾')
-  t.alike(state, enc.state(5, 20, b4a.from('\x04🌾\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')))
+  t.alike(
+    state,
+    enc.state(
+      5,
+      20,
+      b4a.from(
+        '\x04🌾\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+      )
+    )
+  )
   enc.string.encode(state, 'høsten er fin')
   t.alike(state, enc.state(20, 20, b4a.from('\x04🌾\x0ehøsten er fin')))
 
@@ -508,7 +636,10 @@ test('fixed32', function (t) {
   enc.fixed32.encode(state, b4a.alloc(32).fill('a'))
   t.alike(state, enc.state(32, 64, b4a.alloc(64).fill('a', 0, 32)))
   enc.fixed32.encode(state, b4a.alloc(32).fill('b'))
-  t.alike(state, enc.state(64, 64, b4a.alloc(64).fill('a', 0, 32).fill('b', 32, 64)))
+  t.alike(
+    state,
+    enc.state(64, 64, b4a.alloc(64).fill('a', 0, 32).fill('b', 32, 64))
+  )
 
   state.start = 0
   t.alike(enc.fixed32.decode(state), b4a.alloc(32).fill('a'))
@@ -530,7 +661,10 @@ test('fixed64', function (t) {
   enc.fixed64.encode(state, b4a.alloc(64).fill('a'))
   t.alike(state, enc.state(64, 128, b4a.alloc(128).fill('a', 0, 64)))
   enc.fixed64.encode(state, b4a.alloc(64).fill('b'))
-  t.alike(state, enc.state(128, 128, b4a.alloc(128).fill('a', 0, 64).fill('b', 64, 128)))
+  t.alike(
+    state,
+    enc.state(128, 128, b4a.alloc(128).fill('a', 0, 64).fill('b', 64, 128))
+  )
 
   state.start = 0
   t.alike(enc.fixed64.decode(state), b4a.alloc(64).fill('a'))
@@ -571,7 +705,10 @@ test('error for incorrect buffer sizes when encoding fixed-length buffers', func
 
   t.exception(() => enc.encode(enc.fixed32, smallbuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed64, smallbuf), /Incorrect buffer size/)
-  t.exception(() => enc.encode(enc.fixed(100), smallbuf), /Incorrect buffer size/)
+  t.exception(
+    () => enc.encode(enc.fixed(100), smallbuf),
+    /Incorrect buffer size/
+  )
 
   t.exception(() => enc.encode(enc.fixed32, bigBuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed64, bigBuf), /Incorrect buffer size/)
@@ -629,10 +766,10 @@ test('json', function (t) {
 
   state.buffer = b4a.alloc(state.end)
   enc.json.encode(state, { a: 1, b: 2 })
-  t.alike(state, enc.state(14, 14, b4a.concat([
-    b4a.from([13]),
-    b4a.from('{"a":1,"b":2}')
-  ])))
+  t.alike(
+    state,
+    enc.state(14, 14, b4a.concat([b4a.from([13]), b4a.from('{"a":1,"b":2}')]))
+  )
 
   state.start = 0
   t.alike(enc.json.decode(state), { a: 1, b: 2 })
@@ -720,7 +857,10 @@ test('lexint: throws', function (t) {
   enc.lexint.encode(state, num)
 
   t.exception(() => {
-    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+    enc.decode(
+      enc.lexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
   })
 
   num <<= 8
@@ -734,7 +874,10 @@ test('lexint: throws', function (t) {
   enc.lexint.encode(state, num)
 
   t.exception(() => {
-    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+    enc.decode(
+      enc.lexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
   })
 
   num <<= 8
@@ -748,7 +891,10 @@ test('lexint: throws', function (t) {
   enc.lexint.encode(state, num)
 
   t.exception(() => {
-    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+    enc.decode(
+      enc.lexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
   })
 
   num *= 256
@@ -762,7 +908,10 @@ test('lexint: throws', function (t) {
   enc.lexint.encode(state, num)
 
   t.exception(() => {
-    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+    enc.decode(
+      enc.lexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
   })
 
   num *= 256 * 256
@@ -776,7 +925,10 @@ test('lexint: throws', function (t) {
   enc.lexint.encode(state, num)
 
   t.exception(() => {
-    enc.decode(enc.lexint, state.buffer.subarray(0, state.buffer.byteLength - 2))
+    enc.decode(
+      enc.lexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
   })
 
   t.end()
@@ -794,16 +946,20 @@ test('lexint: unpack', function (t) {
   t.is(n, Infinity)
   t.end()
 
-  function compare (a, b) {
+  function compare(a, b) {
     const desc = a + ' !=~ ' + b
     if (/e\+\d+$/.test(a) || /e\+\d+$/.test(b)) {
-      if (String(a).slice(0, 8) !== String(b).slice(0, 8) ||
-        /e\+(\d+)$/.exec(a)[1] !== /e\+(\d+)$/.exec(b)[1]) {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        /e\+(\d+)$/.exec(a)[1] !== /e\+(\d+)$/.exec(b)[1]
+      ) {
         t.fail(desc)
       }
     } else {
-      if (String(a).slice(0, 8) !== String(b).slice(0, 8) ||
-       String(a).length !== String(b).length) {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        String(a).length !== String(b).length
+      ) {
         t.fail(desc)
       }
     }
@@ -862,11 +1018,14 @@ test('ipv4 + port', function (t) {
   const host = '1.2.3.4'
   const port = 1234
 
-  t.alike(enc.decode(enc.ipv4Address, enc.encode(enc.ipv4Address, { host, port })), {
-    host,
-    family: 4,
-    port
-  })
+  t.alike(
+    enc.decode(enc.ipv4Address, enc.encode(enc.ipv4Address, { host, port })),
+    {
+      host,
+      family: 4,
+      port
+    }
+  )
 })
 
 test('ipv6', function (t) {
@@ -905,14 +1064,18 @@ test('ipv6', function (t) {
   })
 
   t.test('lowercase hex', function (t) {
-    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd])
+    const buf = Buffer.from([
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd
+    ])
 
     t.alike(enc.encode(enc.ipv6, '::abcd'), buf)
     t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:0:0:0:abcd')
   })
 
   t.test('uppercase hex', function (t) {
-    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd])
+    const buf = Buffer.from([
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd
+    ])
 
     t.alike(enc.encode(enc.ipv6, '::ABCD'), buf)
     t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:0:0:0:abcd')
@@ -923,11 +1086,14 @@ test('ipv6 + port', function (t) {
   const host = '1:2:3:4:5:6:7:8'
   const port = 1234
 
-  t.alike(enc.decode(enc.ipv6Address, enc.encode(enc.ipv6Address, { host, port })), {
-    host,
-    family: 6,
-    port
-  })
+  t.alike(
+    enc.decode(enc.ipv6Address, enc.encode(enc.ipv6Address, { host, port })),
+    {
+      host,
+      family: 6,
+      port
+    }
+  )
 })
 
 test('dual ip', function (t) {
@@ -949,19 +1115,27 @@ test('dual ip + port', function (t) {
   {
     const host = '1.2.3.4'
 
-    t.alike(enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })), {
-      host,
-      family: 4,
-      port
-    }, 'ipv4')
+    t.alike(
+      enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })),
+      {
+        host,
+        family: 4,
+        port
+      },
+      'ipv4'
+    )
   }
   {
     const host = '1:2:3:4:5:6:7:8'
 
-    t.alike(enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })), {
-      host,
-      family: 6,
-      port
-    }, 'ipv6')
+    t.alike(
+      enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })),
+      {
+        host,
+        family: 6,
+        port
+      },
+      'ipv6'
+    )
   }
 })
