@@ -151,6 +151,13 @@ to build others on top. Feel free to PR more that are missing.
 * `cenc.ndjson` - Encodes a JSON value as newline delimited utf-8.
 * `cenc.raw.ndjson` - Encodes a JSON value as newline delimited utf-8 without a length prefixed.
 * `cenc.any` - Encodes any JSON representable value into a self described buffer. Like JSON + buffer, but using compact types. Useful for schemaless codecs.
+* `cenc.port` - Encodes a port number for network addresses.
+* `cenc.ipv4` - Encodes an IPv4 network address.
+* `cenc.ipv4Address` Encodes an IPv4 network address and a port number.
+* `cenc.ipv6` - Encodes an IPv6 network address.
+* `cenc.ipv6Address` Encodes an IPv6 network address and a port number.
+* `cenc.ip` - Encodes a dual IPv4/6 network address.
+* `cenc.ipAddress` Encodes a dual IPv4/6 network address and a port number.
 * `cenc.from(enc)` - Makes a compact encoder from a [codec](https://github.com/mafintosh/codecs) or [abstract-encoding](https://github.com/mafintosh/abstract-encoding).
 * `cenc.none` - Helper for when you want to just express nothing
 
