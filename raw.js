@@ -3,60 +3,60 @@ const b4a = require('b4a')
 const { BE } = require('./endian')
 
 exports = module.exports = {
-  preencode (state, b) {
+  preencode(state, b) {
     state.end += b.byteLength
   },
-  encode (state, b) {
+  encode(state, b) {
     state.buffer.set(b, state.start)
     state.start += b.byteLength
   },
-  decode (state) {
+  decode(state) {
     const b = state.buffer.subarray(state.start, state.end)
     state.start = state.end
     return b
   }
 }
 
-const buffer = exports.buffer = {
-  preencode (state, b) {
+const buffer = (exports.buffer = {
+  preencode(state, b) {
     if (b) uint8array.preencode(state, b)
     else state.end++
   },
-  encode (state, b) {
+  encode(state, b) {
     if (b) uint8array.encode(state, b)
     else state.buffer[state.start++] = 0
   },
-  decode (state) {
+  decode(state) {
     const b = state.buffer.subarray(state.start)
     if (b.byteLength === 0) return null
     state.start = state.end
     return b
   }
-}
+})
 
 exports.binary = {
   ...buffer,
-  preencode (state, b) {
+  preencode(state, b) {
     if (typeof b === 'string') utf8.preencode(state, b)
     else buffer.preencode(state, b)
   },
-  encode (state, b) {
+  encode(state, b) {
     if (typeof b === 'string') utf8.encode(state, b)
     else buffer.encode(state, b)
   }
 }
 
 exports.arraybuffer = {
-  preencode (state, b) {
+  preencode(state, b) {
     state.end += b.byteLength
   },
-  encode (state, b) {
+  encode(state, b) {
     const view = new Uint8Array(b)
 
     state.buffer.set(view, state.start)
     state.start += b.byteLength
   },
-  decode (state) {
+  decode(state) {
     const b = new ArrayBuffer(state.end - state.start)
     const view = new Uint8Array(b)
 
@@ -68,14 +68,14 @@ exports.arraybuffer = {
   }
 }
 
-function typedarray (TypedArray, swap) {
+function typedarray(TypedArray, swap) {
   const n = TypedArray.BYTES_PER_ELEMENT
 
   return {
-    preencode (state, b) {
+    preencode(state, b) {
       state.end += b.byteLength
     },
-    encode (state, b) {
+    encode(state, b) {
       const view = new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
 
       if (BE && swap) swap(view)
@@ -83,9 +83,9 @@ function typedarray (TypedArray, swap) {
       state.buffer.set(view, state.start)
       state.start += b.byteLength
     },
-    decode (state) {
+    decode(state) {
       let b = state.buffer.subarray(state.start)
-      if ((b.byteOffset % n) !== 0) b = new Uint8Array(b)
+      if (b.byteOffset % n !== 0) b = new Uint8Array(b)
 
       if (BE && swap) swap(b)
 
@@ -96,7 +96,7 @@ function typedarray (TypedArray, swap) {
   }
 }
 
-const uint8array = exports.uint8array = typedarray(Uint8Array)
+const uint8array = (exports.uint8array = typedarray(Uint8Array))
 exports.uint16array = typedarray(Uint16Array, b4a.swap16)
 exports.uint32array = typedarray(Uint32Array, b4a.swap32)
 
@@ -110,15 +110,15 @@ exports.bigint64array = typedarray(BigInt64Array, b4a.swap64)
 exports.float32array = typedarray(Float32Array, b4a.swap32)
 exports.float64array = typedarray(Float64Array, b4a.swap64)
 
-function string (encoding) {
+function string(encoding) {
   return {
-    preencode (state, s) {
+    preencode(state, s) {
       state.end += b4a.byteLength(s, encoding)
     },
-    encode (state, s) {
+    encode(state, s) {
       state.start += b4a.write(state.buffer, s, state.start, encoding)
     },
-    decode (state) {
+    decode(state) {
       const s = b4a.toString(state.buffer, encoding, state.start)
       state.start = state.end
       return s
@@ -126,21 +126,21 @@ function string (encoding) {
   }
 }
 
-const utf8 = exports.string = exports.utf8 = string('utf-8')
+const utf8 = (exports.string = exports.utf8 = string('utf-8'))
 exports.ascii = string('ascii')
 exports.hex = string('hex')
 exports.base64 = string('base64')
 exports.ucs2 = exports.utf16le = string('utf16le')
 
-exports.array = function array (enc) {
+exports.array = function array(enc) {
   return {
-    preencode (state, list) {
+    preencode(state, list) {
       for (const value of list) enc.preencode(state, value)
     },
-    encode (state, list) {
+    encode(state, list) {
       for (const value of list) enc.encode(state, value)
     },
-    decode (state) {
+    decode(state) {
       const arr = []
       while (state.start < state.end) arr.push(enc.decode(state))
       return arr
@@ -149,25 +149,25 @@ exports.array = function array (enc) {
 }
 
 exports.json = {
-  preencode (state, v) {
+  preencode(state, v) {
     utf8.preencode(state, JSON.stringify(v))
   },
-  encode (state, v) {
+  encode(state, v) {
     utf8.encode(state, JSON.stringify(v))
   },
-  decode (state) {
+  decode(state) {
     return JSON.parse(utf8.decode(state))
   }
 }
 
 exports.ndjson = {
-  preencode (state, v) {
+  preencode(state, v) {
     utf8.preencode(state, JSON.stringify(v) + '\n')
   },
-  encode (state, v) {
+  encode(state, v) {
     utf8.encode(state, JSON.stringify(v) + '\n')
   },
-  decode (state) {
+  decode(state) {
     return JSON.parse(utf8.decode(state))
   }
 }
