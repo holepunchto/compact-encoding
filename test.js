@@ -841,3 +841,127 @@ test('framed', function (t) {
   t.alike(enc.encode(e, 4200), b4a.from([0x03, 0xfd, 0x68, 0x10]))
   t.alike(enc.decode(e, b4a.from([0x03, 0xfd, 0x68, 0x10])), 4200)
 })
+
+test('port', function (t) {
+  const p = 0x1234
+  const buf = Buffer.from([0x34, 0x12])
+
+  t.alike(enc.encode(enc.port, p), buf)
+  t.alike(enc.decode(enc.port, buf), p)
+})
+
+test('ipv4', function (t) {
+  const ip = '1.2.3.4'
+  const buf = Buffer.from([1, 2, 3, 4])
+
+  t.alike(enc.encode(enc.ipv4, ip), buf)
+  t.alike(enc.decode(enc.ipv4, buf), ip)
+})
+
+test('ipv4 + port', function (t) {
+  const host = '1.2.3.4'
+  const port = 1234
+
+  t.alike(enc.decode(enc.ipv4Address, enc.encode(enc.ipv4Address, { host, port })), {
+    host,
+    family: 4,
+    port
+  })
+})
+
+test('ipv6', function (t) {
+  const ip = '1:2:3:4:5:6:7:8'
+  const buf = Buffer.from([0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8])
+
+  t.alike(enc.encode(enc.ipv6, ip), buf)
+  t.alike(enc.decode(enc.ipv6, buf), ip)
+
+  t.test('abbreviated', function (t) {
+    const buf = Buffer.from([0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 8])
+
+    t.alike(enc.encode(enc.ipv6, '1:2::7:8'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '1:2:0:0:0:0:7:8')
+  })
+
+  t.test('prefix abbreviated', function (t) {
+    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 6, 0, 7, 0, 8])
+
+    t.alike(enc.encode(enc.ipv6, '::5:6:7:8'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:5:6:7:8')
+  })
+
+  t.test('suffix abbreviated', function (t) {
+    const buf = Buffer.from([0, 1, 0, 2, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    t.alike(enc.encode(enc.ipv6, '1:2:3:4::'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '1:2:3:4:0:0:0:0')
+  })
+
+  t.test('any', function (t) {
+    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    t.alike(enc.encode(enc.ipv6, '::'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:0:0:0:0')
+  })
+
+  t.test('lowercase hex', function (t) {
+    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd])
+
+    t.alike(enc.encode(enc.ipv6, '::abcd'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:0:0:0:abcd')
+  })
+
+  t.test('uppercase hex', function (t) {
+    const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xcd])
+
+    t.alike(enc.encode(enc.ipv6, '::ABCD'), buf)
+    t.alike(enc.decode(enc.ipv6, buf), '0:0:0:0:0:0:0:abcd')
+  })
+})
+
+test('ipv6 + port', function (t) {
+  const host = '1:2:3:4:5:6:7:8'
+  const port = 1234
+
+  t.alike(enc.decode(enc.ipv6Address, enc.encode(enc.ipv6Address, { host, port })), {
+    host,
+    family: 6,
+    port
+  })
+})
+
+test('dual ip', function (t) {
+  {
+    const host = '1.2.3.4'
+
+    t.alike(enc.decode(enc.ip, enc.encode(enc.ip, host)), host, 'ipv4')
+  }
+  {
+    const host = '1:2:3:4:5:6:7:8'
+
+    t.alike(enc.decode(enc.ip, enc.encode(enc.ip, host)), host, 'ipv6')
+  }
+})
+
+test('dual ip + port', function (t) {
+  const port = 1234
+
+  {
+    const host = '1.2.3.4'
+
+    t.alike(enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })), {
+      host,
+      family: 4,
+      port
+    }, 'ipv4')
+  }
+  {
+    const host = '1:2:3:4:5:6:7:8'
+
+    t.alike(enc.decode(enc.ipAddress, enc.encode(enc.ipAddress, { host, port })), {
+      host,
+      family: 6,
+      port
+    }, 'ipv6')
+  }
+})
