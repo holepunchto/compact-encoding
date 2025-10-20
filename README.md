@@ -17,7 +17,7 @@ const state = cenc.state()
 cenc.uint.preencode(state, 42)
 cenc.string.preencode(state, 'hi')
 
-console.log(state) // { start: 0, end: 4, buffer: null, cache: null }
+console.log(state) // { start: 0, end: 4, buffer: null }
 
 state.buffer = Buffer.allocUnsafe(state.end)
 
@@ -36,14 +36,13 @@ cenc.string.decode(state) // 'hi'
 
 #### `state`
 
-Should be an object that looks like this `{ start, end, buffer, cache }`.
+Should be an object that looks like this `{ start, end, buffer }`.
 
 You can also get a blank state object using `cenc.state()`.
 
 - `start` is the byte offset to start encoding/decoding at.
 - `end` is the byte offset indicating the end of the buffer.
 - `buffer` should be either a Node.js Buffer or Uint8Array.
-- `cache` is used internally be codecs, starts out as `null`.
 
 #### `enc.preencode(state, val)`
 
