@@ -3,7 +3,7 @@ const b4a = require('b4a')
 const { BE } = require('./endian')
 
 exports.state = function (start = 0, end = 0, buffer = null) {
-  return { start, end, buffer, cache: null }
+  return { start, end, buffer }
 }
 
 const raw = (exports.raw = require('./raw'))
