@@ -999,6 +999,15 @@ test('signedLexint', function (t) {
     'positive ints come after negative'
   )
 
+  t.is(
+    b4a.compare(
+      enc.encode(enc.signedLexint, -100),
+      enc.encode(enc.signedLexint, -1_000_000)
+    ),
+    1,
+    'negative numbers order correctly'
+  )
+
   t.end()
 
   function compare(a, b) {
