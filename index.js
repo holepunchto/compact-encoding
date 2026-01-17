@@ -247,6 +247,7 @@ const biguint = (exports.biguint = {
 exports.bigint = zigZagBigInt(biguint)
 
 exports.lexint = require('./lexint')
+exports.signedLexint = require('./signed-lexint')
 
 exports.float32 = {
   preencode(state, n) {

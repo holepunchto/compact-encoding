@@ -966,6 +966,61 @@ test('lexint: unpack', function (t) {
   }
 })
 
+test('signedLexint', function (t) {
+  let n
+  let skip = 1
+
+  for (n = 1; n < Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    compare(n, enc.decode(enc.signedLexint, cur))
+    skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
+  }
+  t.is(n, Infinity, 'supports up to positive infinity')
+
+  // Negative
+  for (n = -1; n > -Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    compare(n, enc.decode(enc.signedLexint, cur))
+    skip = -1 - Math.pow(245, Math.ceil(Math.log(-n) / Math.log(256)))
+  }
+  t.is(n, -Infinity, 'supports up to negative infinity')
+  t.is(
+    0,
+    enc.decode(enc.signedLexint, enc.encode(enc.signedLexint, 0)),
+    'supports 0'
+  )
+
+  t.is(
+    b4a.compare(
+      enc.encode(enc.signedLexint, 1_000_000),
+      enc.encode(enc.signedLexint, -1_000_000)
+    ),
+    1,
+    'positive ints come after negative'
+  )
+
+  t.end()
+
+  function compare(a, b) {
+    const desc = a + ' !=~ ' + b
+    if (/e\+\d+$/.test(a) || /e\+\d+$/.test(b)) {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        /e\+(\d+)$/.exec(a)[1] !== /e\+(\d+)$/.exec(b)[1]
+      ) {
+        t.fail(desc)
+      }
+    } else {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        String(a).length !== String(b).length
+      ) {
+        t.fail(desc)
+      }
+    }
+  }
+})
+
 test('date', function (t) {
   const d = new Date()
 
