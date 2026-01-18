@@ -981,7 +981,7 @@ test('signedLexint', function (t) {
   for (n = -1; n > -Number.MAX_VALUE; n += skip) {
     const cur = enc.encode(enc.signedLexint, n)
     compare(n, enc.decode(enc.signedLexint, cur))
-    skip = -1 - Math.pow(245, Math.ceil(Math.log(-n) / Math.log(256)))
+    skip = -1 * (1 + Math.pow(245, Math.ceil(Math.log(-n) / Math.log(256))))
   }
   t.is(n, -Infinity, 'supports up to negative infinity')
   t.is(
