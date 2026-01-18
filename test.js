@@ -1036,6 +1036,29 @@ test('date', function (t) {
   t.alike(enc.decode(enc.date, enc.encode(enc.date, d)), d)
 })
 
+test('lexdate', function (t) {
+  const d = new Date(-100)
+
+  t.alike(enc.decode(enc.lexdate, enc.encode(enc.lexdate, d)), d)
+  t.is(
+    b4a.compare(
+      enc.encode(enc.lexdate, d),
+      enc.encode(enc.lexdate, new Date(-1 * 24 * 60 * 60 * 1000))
+    ),
+    1
+  )
+
+  t.is(
+    b4a.compare(
+      enc.encode(enc.lexdate, d),
+      // 1 off but positive to trip up normal date encoder
+      enc.encode(enc.lexdate, new Date(99))
+    ),
+    -1,
+    'dates after epoch are sorted after preepoch dates'
+  )
+})
+
 test('any', function (t) {
   const o = {
     hello: 'world',

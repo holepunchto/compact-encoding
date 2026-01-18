@@ -545,6 +545,18 @@ exports.date = {
   }
 }
 
+exports.lexdate = {
+  preencode(state, d) {
+    exports.signedLexint.preencode(state, d.getTime())
+  },
+  encode(state, d) {
+    exports.signedLexint.encode(state, d.getTime())
+  },
+  decode(state, d) {
+    return new Date(exports.signedLexint.decode(state))
+  }
+}
+
 exports.json = {
   preencode(state, v) {
     utf8.preencode(state, JSON.stringify(v))
