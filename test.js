@@ -1231,6 +1231,28 @@ test('lexdate', function (t) {
   )
 })
 
+test('lexdate & string', function (t) {
+  const d = new Date(-100)
+  const name = 'John'
+
+  const state = enc.state()
+  enc.lexdate.preencode(state, d)
+  t.alike(state, enc.state(0, 1))
+  enc.string.preencode(state, name)
+
+  state.buffer = b4a.alloc(state.end)
+
+  enc.lexdate.encode(state, d)
+  enc.string.encode(state, name)
+
+  state.start = 0
+  const dOut = enc.lexdate.decode(state)
+  const nameOut = enc.string.decode(state)
+
+  t.alike(d, dOut, 'date decoded')
+  t.alike(name, nameOut, 'name decoded')
+})
+
 test('any', function (t) {
   const o = {
     hello: 'world',

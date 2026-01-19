@@ -74,21 +74,16 @@ function encode(state, num) {
 
 function decode(state) {
   const positive = (state.buffer[state.start] & 0x80) !== 0
-  if (!positive) {
-    // Flip all bits but the positive flag bit
-    state.buffer[state.start] ^= 0x7f
-    for (let i = state.start + 1; i < state.end; i++) {
-      state.buffer[i] ^= 0xff
-    }
-  } else {
-    state.buffer[state.start] &= 0x7f // remove flag
+  const flipBits = positive ? 0 : 0xff
+  if (positive) {
+    state.buffer[state.start] &= 0x7f // remove flag if positive
   }
 
   const max = 123
 
   if (state.end - state.start < 1) throw new Error('Out of bounds')
 
-  const flag = state.buffer[state.start++]
+  const flag = state.buffer[state.start++] ^ (positive ? 0 : 0x7f)
 
   const positiveMultiplier = positive ? 1 : -1
   if (flag < max) return positiveMultiplier * flag
@@ -98,22 +93,24 @@ function decode(state) {
   }
 
   if (flag < 124) {
-    return positiveMultiplier * state.buffer[state.start++] + max
+    return positiveMultiplier * ((state.buffer[state.start++] ^ flipBits) + max)
   }
 
   if (flag < 125) {
     return (
       positiveMultiplier *
-      ((state.buffer[state.start++] << 8) + state.buffer[state.start++] + max)
+      (((state.buffer[state.start++] ^ flipBits) << 8) +
+        (state.buffer[state.start++] ^ flipBits) +
+        max)
     )
   }
 
   if (flag < 126) {
     return (
       positiveMultiplier *
-      ((state.buffer[state.start++] << 16) +
-        (state.buffer[state.start++] << 8) +
-        state.buffer[state.start++] +
+      (((state.buffer[state.start++] ^ flipBits) << 16) +
+        ((state.buffer[state.start++] ^ flipBits) << 8) +
+        (state.buffer[state.start++] ^ flipBits) +
         max)
     )
   }
@@ -122,21 +119,22 @@ function decode(state) {
   if (flag < 127) {
     return (
       positiveMultiplier *
-      (state.buffer[state.start++] * 0x1000000 +
-        (state.buffer[state.start++] << 16) +
-        (state.buffer[state.start++] << 8) +
-        state.buffer[state.start++] +
+      ((state.buffer[state.start++] ^ flipBits) * 0x1000000 +
+        ((state.buffer[state.start++] ^ flipBits) << 16) +
+        ((state.buffer[state.start++] ^ flipBits) << 8) +
+        (state.buffer[state.start++] ^ flipBits) +
         max)
     )
   }
 
-  const exp = decode(state)
+  // Make exp positive if total number is negative
+  const exp = decode(state) * (positive ? 1 : -1)
 
   if (state.end - state.start < 6) throw new Error('Out of bounds')
 
   let rem = 0
   for (let i = 5; i >= 0; i--) {
-    rem += state.buffer[state.start++] * Math.pow(2, 8 * i)
+    rem += (state.buffer[state.start++] ^ flipBits) * Math.pow(2, 8 * i)
   }
 
   return positiveMultiplier * (rem * Math.pow(2, exp - 11) + max)
