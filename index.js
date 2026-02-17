@@ -887,7 +887,7 @@ const record = (exports.record = function (keyEncoding, valueEncoding) {
   }
 })
 
-exports.stringRecord = record(utf8, record(utf8, utf8))
+exports.stringRecord = record(utf8, utf8)
 
 function getType(o) {
   if (o === null || o === undefined) return 0
