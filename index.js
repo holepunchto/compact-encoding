@@ -858,7 +858,7 @@ exports.ipAddress = {
   }
 }
 
-exports.record = function (keyEncoding, valueEncoding) {
+const record = (exports.record = function (keyEncoding, valueEncoding) {
   return {
     preencode(state, v) {
       const keys = Object.keys(v)
@@ -885,7 +885,9 @@ exports.record = function (keyEncoding, valueEncoding) {
       return out
     }
   }
-}
+})
+
+exports.stringRecord = record(utf8, record(utf8, utf8))
 
 function getType(o) {
   if (o === null || o === undefined) return 0

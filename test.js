@@ -1169,3 +1169,19 @@ test.solo('record - nested', function (t) {
     }
   )
 })
+
+test.solo('record - nested', function (t) {
+  t.alike(
+    enc.decode(
+      enc.stringRecord,
+      enc.encode(enc.stringRecord, {
+        a: { b: 'record' },
+        c: { d: 'nested', e: 'test' }
+      })
+    ),
+    {
+      a: { b: 'record' },
+      c: { d: 'nested', e: 'test' }
+    }
+  )
+})
