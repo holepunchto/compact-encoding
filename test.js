@@ -1139,3 +1139,33 @@ test('dual ip + port', function (t) {
     )
   }
 })
+
+test.solo('record', function (t) {
+  const encoding = enc.record(enc.string, enc.string)
+
+  t.alike(
+    enc.decode(encoding, enc.encode(encoding, { a: 'hello', b: 'world' })),
+    {
+      a: 'hello',
+      b: 'world'
+    }
+  )
+})
+
+test.solo('record - nested', function (t) {
+  const encoding = enc.record(enc.string, enc.record(enc.string, enc.string))
+
+  t.alike(
+    enc.decode(
+      encoding,
+      enc.encode(encoding, {
+        a: { b: 'record' },
+        c: { d: 'nested', e: 'test' }
+      })
+    ),
+    {
+      a: { b: 'record' },
+      c: { d: 'nested', e: 'test' }
+    }
+  )
+})
