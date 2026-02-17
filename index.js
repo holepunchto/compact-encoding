@@ -877,7 +877,7 @@ const record = (exports.record = function (keyEncoding, valueEncoding) {
       }
     },
     decode(state) {
-      const out = {}
+      const out = Object.create(null)
       const keys = uint.decode(state)
       for (let i = 0; i < keys; i++) {
         out[keyEncoding.decode(state)] = valueEncoding.decode(state)

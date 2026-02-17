@@ -1140,19 +1140,19 @@ test('dual ip + port', function (t) {
   }
 })
 
-test.solo('record', function (t) {
+test('record', function (t) {
   const encoding = enc.record(enc.string, enc.string)
 
   t.alike(
     enc.decode(encoding, enc.encode(encoding, { a: 'hello', b: 'world' })),
-    {
+    Object.assign(Object.create(null), {
       a: 'hello',
       b: 'world'
-    }
+    })
   )
 })
 
-test.solo('record - nested', function (t) {
+test('record - nested', function (t) {
   const encoding = enc.record(enc.string, enc.record(enc.string, enc.string))
 
   t.alike(
@@ -1163,22 +1163,22 @@ test.solo('record - nested', function (t) {
         c: { d: 'nested', e: 'test' }
       })
     ),
-    {
-      a: { b: 'record' },
-      c: { d: 'nested', e: 'test' }
-    }
+    Object.assign(Object.create(null), {
+      a: Object.assign(Object.create(null), { b: 'record' }),
+      c: Object.assign(Object.create(null), { d: 'nested', e: 'test' })
+    })
   )
 })
 
-test.solo('stringRecord', function (t) {
+test('stringRecord', function (t) {
   t.alike(
     enc.decode(
       enc.stringRecord,
       enc.encode(enc.stringRecord, { a: 'hello', b: 'world' })
     ),
-    {
+    Object.assign(Object.create(null), {
       a: 'hello',
       b: 'world'
-    }
+    })
   )
 })
