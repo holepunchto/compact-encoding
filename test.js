@@ -1139,3 +1139,46 @@ test('dual ip + port', function (t) {
     )
   }
 })
+
+test('record', function (t) {
+  const encoding = enc.record(enc.string, enc.string)
+
+  t.alike(
+    enc.decode(encoding, enc.encode(encoding, { a: 'hello', b: 'world' })),
+    Object.assign(Object.create(null), {
+      a: 'hello',
+      b: 'world'
+    })
+  )
+})
+
+test('record - nested', function (t) {
+  const encoding = enc.record(enc.string, enc.record(enc.string, enc.string))
+
+  t.alike(
+    enc.decode(
+      encoding,
+      enc.encode(encoding, {
+        a: { b: 'record' },
+        c: { d: 'nested', e: 'test' }
+      })
+    ),
+    Object.assign(Object.create(null), {
+      a: Object.assign(Object.create(null), { b: 'record' }),
+      c: Object.assign(Object.create(null), { d: 'nested', e: 'test' })
+    })
+  )
+})
+
+test('stringRecord', function (t) {
+  t.alike(
+    enc.decode(
+      enc.stringRecord,
+      enc.encode(enc.stringRecord, { a: 'hello', b: 'world' })
+    ),
+    Object.assign(Object.create(null), {
+      a: 'hello',
+      b: 'world'
+    })
+  )
+})
