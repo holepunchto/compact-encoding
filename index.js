@@ -247,6 +247,7 @@ const biguint = (exports.biguint = {
 exports.bigint = zigZagBigInt(biguint)
 
 exports.lexint = require('./lexint')
+exports.signedLexint = require('./signed-lexint')
 
 exports.float32 = {
   preencode(state, n) {
@@ -541,6 +542,18 @@ exports.date = {
   },
   decode(state, d) {
     return new Date(int.decode(state))
+  }
+}
+
+exports.lexdate = {
+  preencode(state, d) {
+    exports.signedLexint.preencode(state, d.getTime())
+  },
+  encode(state, d) {
+    exports.signedLexint.encode(state, d.getTime())
+  },
+  decode(state, d) {
+    return new Date(exports.signedLexint.decode(state))
   }
 }
 

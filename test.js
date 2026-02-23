@@ -966,10 +966,291 @@ test('lexint: unpack', function (t) {
   }
 })
 
+test('signedLexint', function (t) {
+  let n
+  let skip = 1
+
+  for (n = 1; n < Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    compare(n, enc.decode(enc.signedLexint, cur))
+    skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
+  }
+  t.is(n, Infinity, 'supports positive numbers up to positive infinity')
+
+  // Negative
+  for (n = -1; n > -Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    compare(n, enc.decode(enc.signedLexint, cur))
+    skip = -1 * (1 + Math.pow(245, Math.ceil(Math.log(-n) / Math.log(256))))
+  }
+  t.is(n, -Infinity, 'supports negative numbers up to negative infinity')
+  t.is(
+    0,
+    enc.decode(enc.signedLexint, enc.encode(enc.signedLexint, 0)),
+    'supports 0'
+  )
+
+  t.is(
+    b4a.compare(
+      enc.encode(enc.signedLexint, 1_000_000),
+      enc.encode(enc.signedLexint, -1_000_000)
+    ),
+    1,
+    'positive ints come after negative'
+  )
+
+  t.is(
+    b4a.compare(
+      enc.encode(enc.signedLexint, -100),
+      enc.encode(enc.signedLexint, -1_000_000)
+    ),
+    1,
+    'negative numbers order correctly'
+  )
+
+  t.end()
+
+  function compare(a, b) {
+    const desc = a + ' !=~ ' + b
+    if (/e\+\d+$/.test(a) || /e\+\d+$/.test(b)) {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        /e\+(\d+)$/.exec(a)[1] !== /e\+(\d+)$/.exec(b)[1]
+      ) {
+        t.fail(desc)
+      }
+    } else {
+      if (
+        String(a).slice(0, 8) !== String(b).slice(0, 8) ||
+        String(a).length !== String(b).length
+      ) {
+        t.fail(desc)
+      }
+    }
+  }
+})
+
+test('signed-lexint: big numbers', function (t) {
+  t.plan(2)
+
+  let prev = enc.encode(enc.signedLexint, 0)
+
+  let n
+  let skip = 1
+
+  for (n = 1; n < Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) < 1) break
+    prev = cur
+    skip = 1 + Math.pow(245, Math.ceil(Math.log(n) / Math.log(256)))
+  }
+  t.is(n, Infinity)
+
+  prev = enc.encode(enc.signedLexint, 0)
+  for (n = -1; n > -Number.MAX_VALUE; n += skip) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) > -1) break
+    prev = cur
+    skip = -1 * (1 + Math.pow(245, Math.ceil(Math.log(-n) / Math.log(256))))
+  }
+  t.is(n, -Infinity)
+})
+
+test('signed-lexint: range precision', function (t) {
+  t.plan(4)
+  const a = 1e55
+  const b = 1.0000000000001e55
+  const ha = enc.encode(enc.signedLexint, a).toString('hex')
+  const hb = enc.encode(enc.signedLexint, b).toString('hex')
+  t.not(a, b)
+  t.not(ha, hb)
+
+  const haNeg = enc.encode(enc.signedLexint, -a).toString('hex')
+  const hbNeg = enc.encode(enc.signedLexint, -b).toString('hex')
+  t.not(-a, -b)
+  t.not(haNeg, hbNeg)
+})
+
+test('signed-lexint: range precision', function (t) {
+  let prev = enc.encode(enc.signedLexint, 0)
+  const skip = 0.000000001e55
+  for (let i = 0, n = 1e55; i < 1000; n = 1e55 + skip * ++i) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) < 1) t.fail('cur <= prev')
+    prev = cur
+  }
+  t.ok(true)
+
+  // Negative
+  for (let i = 0, n = -1e55; i < 1000; n = -1e55 - skip * ++i) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) > -1) t.fail('cur >= prev')
+    prev = cur
+  }
+  t.ok(true)
+
+  t.end()
+})
+
+test('signed-lexint: small numbers', function (t) {
+  let prev = enc.encode(enc.signedLexint, 0)
+  for (let n = 1; n < 256 * 256 * 16; n++) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) < 1) t.fail('cur <= prev')
+    prev = cur
+  }
+  t.ok(true)
+
+  prev = enc.encode(enc.signedLexint, 0)
+  for (let n = -1; n > -256 * 256 * 16; n--) {
+    const cur = enc.encode(enc.signedLexint, n)
+    if (b4a.compare(cur, prev) > -1) t.fail('cur >= prev')
+    prev = cur
+  }
+  t.ok(true)
+  t.end()
+})
+
+test('signed-lexint: throws', function (t) {
+  t.exception(() => {
+    enc.decode(enc.signedLexint, b4a.alloc(1, 251))
+  })
+
+  let num = 124
+
+  const state = enc.state()
+
+  enc.signedLexint.preencode(state, num)
+  state.buffer = b4a.alloc(state.end - state.start)
+  enc.signedLexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(
+      enc.signedLexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
+  })
+
+  num <<= 8
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.signedLexint.preencode(state, num)
+  state.buffer = b4a.alloc(state.end - state.start)
+  enc.signedLexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(
+      enc.signedLexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
+  })
+
+  num <<= 8
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.signedLexint.preencode(state, num)
+  state.buffer = b4a.alloc(state.end - state.start)
+  enc.signedLexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(
+      enc.signedLexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
+  })
+
+  num *= 256
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.signedLexint.preencode(state, num)
+  state.buffer = b4a.alloc(state.end - state.start)
+  enc.signedLexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(
+      enc.signedLexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
+  })
+
+  num *= 256 * 256
+
+  state.start = 0
+  state.end = 0
+  state.buffer = null
+
+  enc.signedLexint.preencode(state, num)
+  state.buffer = b4a.alloc(state.end - state.start)
+  enc.signedLexint.encode(state, num)
+
+  t.exception(() => {
+    enc.decode(
+      enc.signedLexint,
+      state.buffer.subarray(0, state.buffer.byteLength - 2)
+    )
+  })
+
+  t.end()
+})
+
 test('date', function (t) {
   const d = new Date()
 
   t.alike(enc.decode(enc.date, enc.encode(enc.date, d)), d)
+})
+
+test('lexdate', function (t) {
+  const d = new Date(-100)
+
+  t.alike(enc.decode(enc.lexdate, enc.encode(enc.lexdate, d)), d)
+  t.is(
+    b4a.compare(
+      enc.encode(enc.lexdate, d),
+      enc.encode(enc.lexdate, new Date(-1 * 24 * 60 * 60 * 1000))
+    ),
+    1
+  )
+
+  t.is(
+    b4a.compare(
+      enc.encode(enc.lexdate, d),
+      // 1 off but positive to trip up normal date encoder
+      enc.encode(enc.lexdate, new Date(99))
+    ),
+    -1,
+    'dates after epoch are sorted after preepoch dates'
+  )
+})
+
+test('lexdate & string', function (t) {
+  const d = new Date(-100)
+  const name = 'John'
+
+  const state = enc.state()
+  enc.lexdate.preencode(state, d)
+  t.alike(state, enc.state(0, 1))
+  enc.string.preencode(state, name)
+
+  state.buffer = b4a.alloc(state.end)
+
+  enc.lexdate.encode(state, d)
+  enc.string.encode(state, name)
+
+  state.start = 0
+  const dOut = enc.lexdate.decode(state)
+  const nameOut = enc.string.decode(state)
+
+  t.alike(d, dOut, 'date decoded')
+  t.alike(name, nameOut, 'name decoded')
 })
 
 test('any', function (t) {
