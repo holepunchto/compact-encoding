@@ -665,7 +665,21 @@ const any = (exports.any = {
   }
 })
 
-const port = (exports.port = uint16)
+const port = (exports.port = {
+  preencode(state, p) {
+    if (!p) throw new Error('Port must be >0 and <65536')
+    uint16.preencode(state, p)
+  },
+  encode(state, p) {
+    if (!p) throw new Error('Port must be >0 and <65536')
+    uint16.encode(state, p)
+  },
+  decode(state) {
+    const p = uint16.decode(state)
+    if (!p) throw new Error('Port must be >0 and <65536')
+    return p
+  }
+})
 
 const address = (host, family) => {
   return {
