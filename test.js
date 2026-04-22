@@ -311,6 +311,58 @@ test('buffer', function (t) {
   t.exception(() => enc.buffer.decode(state))
 })
 
+test('non-nullable nonNullableBuffer', function (t) {
+  const state = enc.state()
+
+  enc.nonNullableBuffer.preencode(state, b4a.from('hi'))
+  t.alike(state, enc.state(0, 3))
+  enc.nonNullableBuffer.preencode(state, b4a.from('hello'))
+  t.alike(state, enc.state(0, 9))
+  enc.nonNullableBuffer.preencode(state, b4a.alloc(0))
+  t.alike(state, enc.state(0, 10), 'preencode empty nonNullableBuffer')
+
+  state.buffer = b4a.alloc(state.end)
+  enc.nonNullableBuffer.encode(state, b4a.from('hi'))
+  t.alike(
+    state,
+    enc.state(3, 10, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00')),
+    'encode "hi"'
+  )
+  enc.nonNullableBuffer.encode(state, b4a.from('hello'))
+  t.alike(
+    state,
+    enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')),
+    'encode "hello"'
+  )
+  enc.nonNullableBuffer.encode(state, b4a.alloc(0))
+  t.alike(state, enc.state(10, 10, b4a.from('\x02hi\x05hello\x00')))
+
+  state.start = 0
+  t.alike(enc.nonNullableBuffer.decode(state), b4a.from('hi'))
+  t.alike(
+    enc.nonNullableBuffer.decode(state),
+    b4a.from('hello'),
+    'decode "hello"'
+  )
+  t.alike(
+    enc.nonNullableBuffer.decode(state),
+    b4a.alloc(0),
+    'decode empty nonNullableBuffer'
+  )
+  t.is(state.start, state.end)
+
+  t.alike(
+    enc.decode(
+      enc.nonNullableBuffer,
+      enc.encode(enc.nonNullableBuffer, Buffer.alloc(0))
+    ),
+    Buffer.alloc(0),
+    'empty nonNullableBuffer can encode then decode as identity'
+  )
+
+  t.exception(() => enc.nonNullableBuffer.decode(state))
+})
+
 test('arraybuffer', function (t) {
   const state = enc.state()
 
