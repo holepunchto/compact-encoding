@@ -289,24 +289,44 @@ test('buffer', function (t) {
   enc.buffer.preencode(state, b4a.from('hello'))
   t.alike(state, enc.state(0, 9))
   enc.buffer.preencode(state, null)
-  t.alike(state, enc.state(0, 10))
+  t.alike(state, enc.state(0, 10), 'preencode null')
+  enc.buffer.preencode(state, b4a.alloc(0))
+  t.alike(state, enc.state(0, 11), 'preencode empty buffer')
 
   state.buffer = b4a.alloc(state.end)
   enc.buffer.encode(state, b4a.from('hi'))
   t.alike(
     state,
-    enc.state(3, 10, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00'))
+    enc.state(3, 11, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00\x00')),
+    'encode "hi"'
   )
   enc.buffer.encode(state, b4a.from('hello'))
-  t.alike(state, enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')))
+  t.alike(
+    state,
+    enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encode "hello"'
+  )
   enc.buffer.encode(state, null)
-  t.alike(state, enc.state(10, 10, b4a.from('\x02hi\x05hello\x00')))
+  t.alike(
+    state,
+    enc.state(10, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encode null'
+  )
+  enc.buffer.encode(state, b4a.alloc(0))
+  t.alike(state, enc.state(11, 11, b4a.from('\x02hi\x05hello\x00\x00')))
 
   state.start = 0
   t.alike(enc.buffer.decode(state), b4a.from('hi'))
   t.alike(enc.buffer.decode(state), b4a.from('hello'))
-  t.is(enc.buffer.decode(state), null)
+  t.is(enc.buffer.decode(state), null, 'decode null')
+  t.alike(enc.buffer.decode(state), null, 'decode empty buffer as null')
   t.is(state.start, state.end)
+
+  t.alike(
+    enc.decode(enc.buffer, enc.encode(enc.buffer, Buffer.alloc(0))),
+    null,
+    'empty buffer will encode then decode as null'
+  )
 
   t.exception(() => enc.buffer.decode(state))
 })
