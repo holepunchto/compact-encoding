@@ -658,6 +658,24 @@ test('raw string', function (t) {
   t.is(enc.raw.string.decode(state), '')
 })
 
+test('raw buffer', function (t) {
+  const state = enc.state()
+
+  enc.raw.string.preencode(state, b4a.from('hello'))
+  t.alike(state, enc.state(0, 5))
+  enc.raw.string.preencode(state, b4a.from(' world'))
+  t.alike(state, enc.state(0, 11))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.buffer.encode(state, b4a.from('hello'))
+  enc.raw.buffer.encode(state, b4a.from(' world'))
+  t.alike(state, enc.state(11, 11, b4a.from('hello world')))
+
+  state.start = 0
+  t.alike(enc.raw.buffer.decode(state), b4a.from('hello world'))
+  t.alike(enc.raw.buffer.decode(state), b4a.alloc(0))
+})
+
 test('fixed32', function (t) {
   const state = enc.state()
 
