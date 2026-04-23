@@ -302,6 +302,20 @@ exports.float64 = {
 
 const buffer = (exports.buffer = {
   preencode(state, b) {
+    uint8array.preencode(state, b)
+  },
+  encode(state, b) {
+    uint8array.encode(state, b)
+  },
+  decode(state) {
+    const len = uint.decode(state)
+    if (state.end - state.start < len) throw new Error('Out of bounds')
+    return state.buffer.subarray(state.start, (state.start += len))
+  }
+})
+
+exports.optionalBuffer = {
+  preencode(state, b) {
     if (b) uint8array.preencode(state, b)
     else state.end++
   },
@@ -315,7 +329,7 @@ const buffer = (exports.buffer = {
     if (state.end - state.start < len) throw new Error('Out of bounds')
     return state.buffer.subarray(state.start, (state.start += len))
   }
-})
+}
 
 exports.binary = {
   ...buffer,

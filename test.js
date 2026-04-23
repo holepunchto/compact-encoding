@@ -288,7 +288,7 @@ test('buffer', function (t) {
   t.alike(state, enc.state(0, 3))
   enc.buffer.preencode(state, b4a.from('hello'))
   t.alike(state, enc.state(0, 9))
-  enc.buffer.preencode(state, null)
+  enc.buffer.preencode(state, b4a.alloc(0))
   t.alike(state, enc.state(0, 10))
 
   state.buffer = b4a.alloc(state.end)
@@ -299,16 +299,50 @@ test('buffer', function (t) {
   )
   enc.buffer.encode(state, b4a.from('hello'))
   t.alike(state, enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')))
-  enc.buffer.encode(state, null)
+  enc.buffer.encode(state, b4a.alloc(0))
   t.alike(state, enc.state(10, 10, b4a.from('\x02hi\x05hello\x00')))
 
   state.start = 0
   t.alike(enc.buffer.decode(state), b4a.from('hi'))
   t.alike(enc.buffer.decode(state), b4a.from('hello'))
-  t.is(enc.buffer.decode(state), null)
+  t.alike(enc.buffer.decode(state), b4a.alloc(0))
   t.is(state.start, state.end)
 
   t.exception(() => enc.buffer.decode(state))
+})
+
+test('optionalBuffer', function (t) {
+  const state = enc.state()
+
+  enc.optionalBuffer.preencode(state, b4a.from('hi'))
+  t.alike(state, enc.state(0, 3))
+  enc.optionalBuffer.preencode(state, b4a.from('hello'))
+  t.alike(state, enc.state(0, 9))
+  enc.optionalBuffer.preencode(state, null)
+  enc.optionalBuffer.preencode(state, b4a.alloc(0))
+  t.alike(state, enc.state(0, 11))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.optionalBuffer.encode(state, b4a.from('hi'))
+  t.alike(
+    state,
+    enc.state(3, 11, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00\x00'))
+  )
+  enc.optionalBuffer.encode(state, b4a.from('hello'))
+  t.alike(state, enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+  enc.optionalBuffer.encode(state, null)
+  t.alike(state, enc.state(10, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+  enc.optionalBuffer.encode(state, b4a.alloc(0))
+  t.alike(state, enc.state(11, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+
+  state.start = 0
+  t.alike(enc.optionalBuffer.decode(state), b4a.from('hi'))
+  t.alike(enc.optionalBuffer.decode(state), b4a.from('hello'))
+  t.is(enc.optionalBuffer.decode(state), null)
+  t.is(enc.optionalBuffer.decode(state), null, 'empty buffer decodes as null')
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.optionalBuffer.decode(state))
 })
 
 test('arraybuffer', function (t) {
@@ -622,6 +656,24 @@ test('raw string', function (t) {
   state.start = 0
   t.is(enc.raw.string.decode(state), 'hello world')
   t.is(enc.raw.string.decode(state), '')
+})
+
+test('raw buffer', function (t) {
+  const state = enc.state()
+
+  enc.raw.string.preencode(state, b4a.from('hello'))
+  t.alike(state, enc.state(0, 5))
+  enc.raw.string.preencode(state, b4a.from(' world'))
+  t.alike(state, enc.state(0, 11))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.raw.buffer.encode(state, b4a.from('hello'))
+  enc.raw.buffer.encode(state, b4a.from(' world'))
+  t.alike(state, enc.state(11, 11, b4a.from('hello world')))
+
+  state.start = 0
+  t.alike(enc.raw.buffer.decode(state), b4a.from('hello world'))
+  t.alike(enc.raw.buffer.decode(state), b4a.alloc(0))
 })
 
 test('fixed32', function (t) {
