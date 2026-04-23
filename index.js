@@ -314,6 +314,23 @@ const buffer = (exports.buffer = {
   }
 })
 
+exports.optionalBuffer = {
+  preencode(state, b) {
+    if (b) uint8array.preencode(state, b)
+    else state.end++
+  },
+  encode(state, b) {
+    if (b) uint8array.encode(state, b)
+    else state.buffer[state.start++] = 0
+  },
+  decode(state) {
+    const len = uint.decode(state)
+    if (len === 0) return null
+    if (state.end - state.start < len) throw new Error('Out of bounds')
+    return state.buffer.subarray(state.start, (state.start += len))
+  }
+}
+
 exports.binary = {
   ...buffer,
   preencode(state, b) {
