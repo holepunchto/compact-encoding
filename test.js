@@ -288,7 +288,7 @@ test('buffer', function (t) {
   t.alike(state, enc.state(0, 3))
   enc.buffer.preencode(state, b4a.from('hello'))
   t.alike(state, enc.state(0, 9))
-  enc.buffer.preencode(state, null)
+  enc.buffer.preencode(state, b4a.alloc(0))
   t.alike(state, enc.state(0, 10))
 
   state.buffer = b4a.alloc(state.end)
@@ -299,13 +299,13 @@ test('buffer', function (t) {
   )
   enc.buffer.encode(state, b4a.from('hello'))
   t.alike(state, enc.state(9, 10, b4a.from('\x02hi\x05hello\x00')))
-  enc.buffer.encode(state, null)
+  enc.buffer.encode(state, b4a.alloc(0))
   t.alike(state, enc.state(10, 10, b4a.from('\x02hi\x05hello\x00')))
 
   state.start = 0
   t.alike(enc.buffer.decode(state), b4a.from('hi'))
   t.alike(enc.buffer.decode(state), b4a.from('hello'))
-  t.is(enc.buffer.decode(state), null)
+  t.alike(enc.buffer.decode(state), b4a.alloc(0))
   t.is(state.start, state.end)
 
   t.exception(() => enc.buffer.decode(state))
