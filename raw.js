@@ -19,16 +19,13 @@ exports = module.exports = {
 
 const buffer = (exports.buffer = {
   preencode(state, b) {
-    if (b) uint8array.preencode(state, b)
-    else state.end++
+    uint8array.preencode(state, b)
   },
   encode(state, b) {
-    if (b) uint8array.encode(state, b)
-    else state.buffer[state.start++] = 0
+    uint8array.encode(state, b)
   },
   decode(state) {
     const b = state.buffer.subarray(state.start)
-    if (b.byteLength === 0) return null
     state.start = state.end
     return b
   }
