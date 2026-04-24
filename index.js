@@ -314,22 +314,24 @@ const buffer = (exports.buffer = {
   }
 })
 
-exports.optionalBuffer = {
+const lengthOptional = (enc) => ({
   preencode(state, b) {
-    if (b) uint8array.preencode(state, b)
+    if (b) enc.preencode(state, b)
     else state.end++
   },
   encode(state, b) {
-    if (b) uint8array.encode(state, b)
+    if (b) enc.encode(state, b)
     else state.buffer[state.start++] = 0
   },
   decode(state) {
-    const len = uint.decode(state)
+    const len = uint8.decode(state) //uint8 since we only care if 0
     if (len === 0) return null
-    if (state.end - state.start < len) throw new Error('Out of bounds')
-    return state.buffer.subarray(state.start, (state.start += len))
+    state.start-- // undo decoding length
+    return enc.decode(state)
   }
-}
+})
+
+exports.optionalBuffer = lengthOptional(buffer)
 
 exports.binary = {
   ...buffer,
