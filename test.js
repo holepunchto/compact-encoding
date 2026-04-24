@@ -315,32 +315,49 @@ test('optionalBuffer', function (t) {
   const state = enc.state()
 
   enc.optionalBuffer.preencode(state, b4a.from('hi'))
-  t.alike(state, enc.state(0, 3))
+  t.alike(state, enc.state(0, 3), 'preencodes string')
   enc.optionalBuffer.preencode(state, b4a.from('hello'))
-  t.alike(state, enc.state(0, 9))
+  t.alike(state, enc.state(0, 9), 'preencodes string 2x')
   enc.optionalBuffer.preencode(state, null)
   enc.optionalBuffer.preencode(state, b4a.alloc(0))
-  t.alike(state, enc.state(0, 11))
+  t.alike(state, enc.state(0, 11), 'preencodes null & empty buffer')
 
   state.buffer = b4a.alloc(state.end)
   enc.optionalBuffer.encode(state, b4a.from('hi'))
   t.alike(
     state,
-    enc.state(3, 11, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00\x00'))
+    enc.state(3, 11, b4a.from('\x02hi\x00\x00\x00\x00\x00\x00\x00\x00')),
+    'encodes string'
   )
   enc.optionalBuffer.encode(state, b4a.from('hello'))
-  t.alike(state, enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+  t.alike(
+    state,
+    enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encodes string 2x'
+  )
   enc.optionalBuffer.encode(state, null)
-  t.alike(state, enc.state(10, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+  t.alike(
+    state,
+    enc.state(10, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encodes null'
+  )
   enc.optionalBuffer.encode(state, b4a.alloc(0))
-  t.alike(state, enc.state(11, 11, b4a.from('\x02hi\x05hello\x00\x00')))
+  t.alike(
+    state,
+    enc.state(11, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encodes empty buffer'
+  )
 
   state.start = 0
-  t.alike(enc.optionalBuffer.decode(state), b4a.from('hi'))
-  t.alike(enc.optionalBuffer.decode(state), b4a.from('hello'))
-  t.is(enc.optionalBuffer.decode(state), null)
-  t.is(enc.optionalBuffer.decode(state), null, 'empty buffer decodes as null')
-  t.is(state.start, state.end)
+  t.alike(enc.optionalBuffer.decode(state), b4a.from('hi'), 'decode string')
+  t.alike(
+    enc.optionalBuffer.decode(state),
+    b4a.from('hello'),
+    'decode string 2x'
+  )
+  t.is(enc.optionalBuffer.decode(state), null, 'decodes null')
+  t.is(enc.optionalBuffer.decode(state), null, 'decodes empty buffer as null')
+  t.is(state.start, state.end, 'exhausts buffer')
 
   t.exception(() => enc.optionalBuffer.decode(state))
 })
