@@ -330,7 +330,11 @@ test('optionalBuffer', function (t) {
     'encodes string'
   )
   enc.optionalBuffer.encode(state, b4a.from('hello'))
-  t.alike(state, enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')), 'encodes string 2x')
+  t.alike(
+    state,
+    enc.state(9, 11, b4a.from('\x02hi\x05hello\x00\x00')),
+    'encodes string 2x'
+  )
   enc.optionalBuffer.encode(state, null)
   t.alike(
     state,
@@ -346,7 +350,11 @@ test('optionalBuffer', function (t) {
 
   state.start = 0
   t.alike(enc.optionalBuffer.decode(state), b4a.from('hi'), 'decode string')
-  t.alike(enc.optionalBuffer.decode(state), b4a.from('hello'), 'decode string 2x')
+  t.alike(
+    enc.optionalBuffer.decode(state),
+    b4a.from('hello'),
+    'decode string 2x'
+  )
   t.is(enc.optionalBuffer.decode(state), null, 'decodes null')
   t.is(enc.optionalBuffer.decode(state), null, 'decodes empty buffer as null')
   t.is(state.start, state.end, 'exhausts buffer')
