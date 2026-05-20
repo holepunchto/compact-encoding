@@ -105,6 +105,28 @@ const uint32 = (exports.uint32 = {
   }
 })
 
+const uint32be = (exports.uint32be = {
+  preencode(state, n) {
+    state.end += 4
+  },
+  encode(state, n) {
+    validateUint(n)
+    state.buffer[state.start++] = n >>> 24
+    state.buffer[state.start++] = n >>> 16
+    state.buffer[state.start++] = n >>> 8
+    state.buffer[state.start++] = n
+  },
+  decode(state) {
+    if (state.end - state.start < 4) throw new Error('Out of bounds')
+    return (
+      state.buffer[state.start++] * 0x1000000 +
+      state.buffer[state.start++] * 0x10000 +
+      state.buffer[state.start++] * 0x100 +
+      state.buffer[state.start++]
+    )
+  }
+})
+
 const uint40 = (exports.uint40 = {
   preencode(state, n) {
     state.end += 5
@@ -166,6 +188,22 @@ const uint64 = (exports.uint64 = {
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
     return uint32.decode(state) + 0x100000000 * uint32.decode(state)
+  }
+})
+
+const uint64be = (exports.uint64be = {
+  preencode(state, n) {
+    state.end += 8
+  },
+  encode(state, n) {
+    validateUint(n)
+    const r = Math.floor(n / 0x100000000)
+    uint32be.encode(state, r)
+    uint32be.encode(state, n)
+  },
+  decode(state) {
+    if (state.end - state.start < 8) throw new Error('Out of bounds')
+    return 0x100000000 * uint32be.decode(state) + uint32be.decode(state)
   }
 })
 
