@@ -42,6 +42,159 @@ test('uint', function (t) {
   t.exception(() => enc.uint.decode(state))
 })
 
+test('uint32 & uint32be', function (t) {
+  const state = enc.state()
+
+  enc.uint32.preencode(state, 42)
+  t.alike(state, enc.state(0, 4))
+  enc.uint32.preencode(state, 4200)
+  t.alike(state, enc.state(0, 8))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.uint32.encode(state, 42)
+  t.alike(state, enc.state(4, 8, b4a.from([42, 0, 0, 0, 0, 0, 0, 0])))
+  enc.uint32.encode(state, 4200)
+  t.alike(state, enc.state(8, 8, b4a.from([42, 0, 0, 0, 104, 16, 0, 0])))
+
+  state.start = 0
+  t.is(enc.uint32.decode(state), 42)
+  t.is(enc.uint32.decode(state), 4200)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.uint32.decode(state))
+
+  const state2 = enc.state()
+
+  enc.uint32be.preencode(state2, 42)
+  t.alike(state2, enc.state(0, 4))
+  enc.uint32be.preencode(state2, 4200)
+  t.alike(state2, enc.state(0, 8))
+
+  state2.buffer = b4a.alloc(state2.end)
+  enc.uint32be.encode(state2, 42)
+  t.alike(state2, enc.state(4, 8, b4a.from([0, 0, 0, 42, 0, 0, 0, 0])))
+  enc.uint32be.encode(state2, 4200)
+  t.alike(state2, enc.state(8, 8, b4a.from([0, 0, 0, 42, 0, 0, 16, 104])))
+
+  state2.start = 0
+  t.is(enc.uint32be.decode(state2), 42)
+  t.is(enc.uint32be.decode(state2), 4200)
+  t.is(state2.start, state2.end)
+
+  t.exception(() => enc.uint32be.decode(state2))
+})
+
+test('uint64 & uint64be', function (t) {
+  const state = enc.state()
+
+  enc.uint64.preencode(state, 42)
+  t.alike(state, enc.state(0, 8))
+  enc.uint64.preencode(state, 4200)
+  t.alike(state, enc.state(0, 16))
+  enc.uint64.preencode(state, 0x200000000)
+  t.alike(state, enc.state(0, 24))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.uint64.encode(state, 42)
+  t.alike(
+    state,
+    enc.state(
+      8,
+      24,
+      b4a.from([
+        42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ])
+    )
+  )
+  enc.uint64.encode(state, 4200)
+  t.alike(
+    state,
+    enc.state(
+      16,
+      24,
+      b4a.from([
+        42, 0, 0, 0, 0, 0, 0, 0, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0
+      ])
+    )
+  )
+
+  enc.uint64.encode(state, 0x200000000)
+  t.alike(
+    state,
+    enc.state(
+      24,
+      24,
+      b4a.from([
+        42, 0, 0, 0, 0, 0, 0, 0, 104, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
+        0
+      ])
+    )
+  )
+
+  state.start = 0
+  t.is(enc.uint64.decode(state), 42)
+  t.is(enc.uint64.decode(state), 4200)
+  t.is(enc.uint64.decode(state), 0x200000000)
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.uint64.decode(state))
+
+  const state2 = enc.state()
+
+  enc.uint64be.preencode(state2, 42)
+  t.alike(state2, enc.state(0, 8))
+  enc.uint64be.preencode(state2, 4200)
+  t.alike(state2, enc.state(0, 16))
+  enc.uint64be.preencode(state2, 0x200000000)
+  t.alike(state2, enc.state(0, 24))
+
+  state2.buffer = b4a.alloc(state2.end)
+  enc.uint64be.encode(state2, 42)
+  t.alike(
+    state2,
+    enc.state(
+      8,
+      24,
+      b4a.from([
+        0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ])
+    )
+  )
+  enc.uint64be.encode(state2, 4200)
+  t.alike(
+    state2,
+    enc.state(
+      16,
+      24,
+      b4a.from([
+        0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 16, 104, 0, 0, 0, 0, 0, 0, 0,
+        0
+      ])
+    )
+  )
+  enc.uint64be.encode(state2, 0x200000000)
+  t.alike(
+    state2,
+    enc.state(
+      24,
+      24,
+      b4a.from([
+        0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 16, 104, 0, 0, 0, 2, 0, 0, 0,
+        0
+      ])
+    )
+  )
+
+  state2.start = 0
+  t.is(enc.uint64be.decode(state2), 42)
+  t.is(enc.uint64be.decode(state2), 4200)
+  t.is(enc.uint64be.decode(state2), 0x200000000)
+  t.is(state2.start, state2.end)
+
+  t.exception(() => enc.uint64be.decode(state2))
+})
+
 test('int', function (t) {
   const state = enc.state()
 
