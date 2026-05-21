@@ -191,7 +191,7 @@ const uint64 = (exports.uint64 = {
   }
 })
 
-const uint64be = (exports.uint64be = {
+exports.uint64be = {
   preencode(state, n) {
     state.end += 8
   },
@@ -205,7 +205,7 @@ const uint64be = (exports.uint64be = {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
     return 0x100000000 * uint32be.decode(state) + uint32be.decode(state)
   }
-})
+}
 
 const int = (exports.int = zigZagInt(uint))
 exports.int8 = zigZagInt(uint8)
