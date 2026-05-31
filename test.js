@@ -217,6 +217,22 @@ test('int', function (t) {
   t.exception(() => enc.int.decode(state))
 })
 
+test('integers beyond the safe range throw instead of silently corrupting', function (t) {
+  // The safe-integer boundary still encodes and round-trips.
+  const state = enc.state()
+  enc.uint64.preencode(state, Number.MAX_SAFE_INTEGER)
+  state.buffer = b4a.alloc(state.end)
+  enc.uint64.encode(state, Number.MAX_SAFE_INTEGER)
+  state.start = 0
+  t.is(enc.uint64.decode(state), Number.MAX_SAFE_INTEGER)
+
+  // Beyond it both uint and the zig-zag int codecs reject rather than misround.
+  const big = enc.state(0, 64, b4a.alloc(64))
+  t.exception(() => enc.uint64.encode(big, Number.MAX_SAFE_INTEGER + 1))
+  t.exception(() => enc.int56.encode(big, -(2 ** 53 - 1)))
+  t.exception(() => enc.int.encode(big, 2 ** 53))
+})
+
 test('float64', function (t) {
   const state = enc.state()
 
