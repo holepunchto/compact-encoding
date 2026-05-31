@@ -1093,6 +1093,6 @@ function validateUint(n) {
   // guards int values whose doubled magnitude exceeds the safe range.
   if (n > Number.MAX_SAFE_INTEGER)
     throw new Error(
-      'uint is greater than the maximum safe integer, use biguint'
+      'integer is greater than the maximum safe integer, use biguint/bigint'
     )
 }
