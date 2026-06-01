@@ -1088,4 +1088,11 @@ function zigZagEncodeBigInt(n) {
 function validateUint(n) {
   if (n >= 0 === false /* Handles NaN as well */)
     throw new Error('uint must be positive')
+  // Beyond this, Number arithmetic loses precision and silently corrupts the
+  // encoding. The zig-zag int codecs route through here too, so this also
+  // guards int values whose doubled magnitude exceeds the safe range.
+  if (n > Number.MAX_SAFE_INTEGER)
+    throw new Error(
+      'integer is greater than the maximum safe integer, use biguint/bigint'
+    )
 }
