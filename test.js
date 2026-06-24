@@ -2,6 +2,8 @@ const enc = require('./')
 const test = require('brittle')
 const b4a = require('b4a')
 
+const FIRST_UNSAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER) + 1n
+
 test('uint', function (t) {
   const state = enc.state()
 
@@ -220,17 +222,31 @@ test('int', function (t) {
 test('integers beyond the safe range throw instead of silently corrupting', function (t) {
   // The safe-integer boundary still encodes and round-trips.
   const state = enc.state()
+  const unsafe = FIRST_UNSAFE_INTEGER
+
   enc.uint64.preencode(state, Number.MAX_SAFE_INTEGER)
   state.buffer = b4a.alloc(state.end)
   enc.uint64.encode(state, Number.MAX_SAFE_INTEGER)
   state.start = 0
   t.is(enc.uint64.decode(state), Number.MAX_SAFE_INTEGER)
 
-  // Beyond it both uint and the zig-zag int codecs reject rather than misround.
+  // Beyond it, encoding uint and zig-zag int codecs rejects rather than misrounds.
   const big = enc.state(0, 64, b4a.alloc(64))
   t.exception(() => enc.uint64.encode(big, Number.MAX_SAFE_INTEGER + 1))
   t.exception(() => enc.int56.encode(big, -(2 ** 53 - 1)))
   t.exception(() => enc.int.encode(big, 2 ** 53))
+
+  // Decoding the same first unsafe integer rejects instead of returning an unsafe Number.
+  t.exception(() =>
+    enc.uint.decode(
+      enc.state(0, 9, b4a.concat([b4a.from([0xff]), uint64(unsafe, true)]))
+    )
+  )
+  t.exception(() =>
+    enc.uint56.decode(enc.state(0, 7, uint64(unsafe, true).subarray(0, 7)))
+  )
+  t.exception(() => enc.uint64.decode(enc.state(0, 8, uint64(unsafe, true))))
+  t.exception(() => enc.uint64be.decode(enc.state(0, 8, uint64(unsafe, false))))
 })
 
 test('float64', function (t) {
@@ -1403,3 +1419,10 @@ test('stringRecord', function (t) {
     })
   )
 })
+
+function uint64(n, le) {
+  const buf = b4a.alloc(8)
+  const view = new DataView(buf.buffer, buf.byteOffset, 8)
+  view.setBigUint64(0, n, le)
+  return buf
+}
