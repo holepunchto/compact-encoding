@@ -2,13 +2,8 @@
   "name": "compact-encoding",
   "version": "3.3.0",
   "description": "A series of compact encoding schemes for building small and fast parsers and serializers",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
-    },
-    "./package": "./package.json"
-  },
+  "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "endian.js",
     "index.js",

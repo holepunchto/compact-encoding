@@ -8,12 +8,12 @@ export function state<T extends Uint8Array = Uint8Array>(
   start?: number,
   end?: number,
   buffer?: T | null
-): State
+): State<T>
 
-interface Encoder<T = unknown> {
-  preencode(state: State, val: T): void
-  encode(state: State, val: T): void
-  decode(state: State): T
+interface Encoder<Input = unknown, Output = Input> {
+  preencode(state: State, val: Input): void
+  encode(state: State, val: Input): void
+  decode(state: State): Output
 }
 
 interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
@@ -25,22 +25,22 @@ interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
   uint16array: Encoder<Uint16Array>
   uint32array: Encoder<Uint32Array>
 
-  int8: Encoder<number>
-  int16: Encoder<number>
-  int24: Encoder<number>
+  int8array: Encoder<Int8Array>
+  int16array: Encoder<Int16Array>
+  int32array: Encoder<Int32Array>
 
   biguint64array: Encoder<BigUint64Array>
   bigint64array: Encoder<BigInt64Array>
 
-  float32: Encoder<number>
-  float64: Encoder<number>
+  float32array: Encoder<Float32Array>
+  float64array: Encoder<Float64Array>
 
-  string: StringEncoder<string>
-  utf8: StringEncoder<string>
-  ascii: StringEncoder<string>
-  hex: StringEncoder<string>
-  base64: StringEncoder<string>
-  ucs2: StringEncoder<string>
+  string: Encoder<string>
+  utf8: Encoder<string>
+  ascii: Encoder<string>
+  hex: Encoder<string>
+  base64: Encoder<string>
+  ucs2: Encoder<string>
 
   array: <T>(enc: Encoder<T>) => Encoder<T[]>
 
@@ -77,14 +77,14 @@ export const bigint64: Encoder<bigint>
 export const biguint: Encoder<bigint>
 export const bigint: Encoder<bigint>
 
-export const lexint: Encoder<unknown>
+export const lexint: Encoder<number>
 
 export const float32: Encoder<number>
 export const float64: Encoder<number>
 
 export const buffer: Encoder<Uint8Array>
 export const optionalBuffer: Encoder<Uint8Array | null>
-export const binary: Encoder<string | Uint8Array>
+export const binary: Encoder<string | Uint8Array, Uint8Array>
 export const arraybuffer: Encoder<ArrayBuffer>
 
 export const uint8array: Encoder<Uint8Array>
@@ -121,7 +121,7 @@ export const fixed64: Encoder<Uint8Array>
 
 export function array<T>(enc: Encoder<T>): Encoder<T[]>
 
-export function frame(enc: Encoder): Encoder
+export function frame<T>(enc: Encoder<T>): Encoder<T>
 
 export const date: Encoder<Date>
 
@@ -130,13 +130,22 @@ export const ndjson: Encoder<unknown>
 export const none: Encoder<unknown>
 export const any: Encoder<unknown>
 
+interface AddressInput {
+  host: string
+  port: number
+}
+
+interface Address<F extends 4 | 6 = 4 | 6> extends AddressInput {
+  family: F
+}
+
 export const port: Encoder<number>
 export const ipv4: Encoder<string>
-export const ipv4Address: Encoder<{ host: 'string'; port: number }>
+export const ipv4Address: Encoder<AddressInput, Address<4>>
 export const ipv6: Encoder<string>
-export const ipv6Address: Encoder<{ host: 'string'; port: number }>
+export const ipv6Address: Encoder<AddressInput, Address<6>>
 export const ip: Encoder<string>
-export const ipAddress: Encoder<{ host: 'string'; port: number }>
+export const ipAddress: Encoder<AddressInput, Address>
 
 export function record<T = unknown>(
   keyEncoding: Encoder,
@@ -144,16 +153,20 @@ export function record<T = unknown>(
 ): Encoder<Record<string, T>>
 export const stringRecord: Encoder<Record<string, string>>
 
+export function from(enc: 'ascii'): Raw['ascii']
+export function from(enc: 'utf-8' | 'utf8'): Raw['utf8']
+export function from(enc: 'hex'): Raw['hex']
+export function from(enc: 'base64'): Raw['base64']
+export function from(
+  enc: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'
+): Raw['ucs2']
+export function from(enc: 'ndjson'): Raw['ndjson']
+export function from(enc: 'json'): Raw['json']
+export function from(enc: 'binary' | string): Raw['binary']
 export function from(enc: Encoder): Encoder
 
-export function encode<T = unknown, B extends Uint8Array = Uint8Array>(
-  enc: Encoder<T>,
-  m: T
-): B
+export function encode<T = unknown>(enc: Encoder<T>, m: T): Uint8Array
 
-export function decode<T = unknown, B extends Uint8Array = Uint8Array>(
-  enc: Encoder<T>,
-  buffer: B
-): T
+export function decode<T = unknown>(enc: Encoder<T>, buffer: Uint8Array): T
 
 export type { State, Encoder, StringEncoder }
