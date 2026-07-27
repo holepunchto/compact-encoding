@@ -169,4 +169,4 @@ export function encode<T = unknown>(enc: Encoder<T>, m: T): Uint8Array
 
 export function decode<T = unknown>(enc: Encoder<T>, buffer: Uint8Array): T
 
-export type { State, Encoder, StringEncoder }
+export type { State, Encoder, Raw, StringEncoder, AddressInput, Address }
