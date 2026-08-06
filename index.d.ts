@@ -18,7 +18,7 @@ interface Encoder<Input = unknown, Output = Input> {
 
 interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
   buffer: Encoder<T>
-  binary: Encoder<string | T>
+  binary: Encoder<string | T, T>
   arraybuffer: Encoder<ArrayBuffer>
 
   uint8array: Encoder<Uint8Array>
@@ -41,6 +41,7 @@ interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
   hex: Encoder<string>
   base64: Encoder<string>
   ucs2: Encoder<string>
+  utf16le: Encoder<string>
 
   array: <T>(enc: Encoder<T>) => Encoder<T[]>
 
@@ -119,15 +120,15 @@ export function fixed(n: number): Encoder<Uint8Array>
 export const fixed32: Encoder<Uint8Array>
 export const fixed64: Encoder<Uint8Array>
 
-export function array<T>(enc: Encoder<T>): Encoder<T[]>
+export function array<I, O>(enc: Encoder<I, O>): Encoder<I, O[]>
 
-export function frame<T>(enc: Encoder<T>): Encoder<T>
+export function frame<I, O>(enc: Encoder<I, O>): Encoder<I, O>
 
 export const date: Encoder<Date>
 
 export const json: Encoder<unknown>
 export const ndjson: Encoder<unknown>
-export const none: Encoder<unknown>
+export const none: Encoder<unknown, null>
 export const any: Encoder<unknown>
 
 interface AddressInput {
@@ -163,10 +164,16 @@ export function from(
 export function from(enc: 'ndjson'): Raw['ndjson']
 export function from(enc: 'json'): Raw['json']
 export function from(enc: 'binary' | string): Raw['binary']
-export function from(enc: Encoder): Encoder
+export function from<I, O>(enc: Encoder<I, O>): Encoder<I, O>
 
-export function encode<T = unknown>(enc: Encoder<T>, m: T): Uint8Array
+export function encode<Input = unknown, Output = Input>(
+  enc: Encoder<Input, Output>,
+  m: Input
+): Uint8Array
 
-export function decode<T = unknown>(enc: Encoder<T>, buffer: Uint8Array): T
+export function decode<Input = unknown, Output = Input>(
+  enc: Encoder<Input, Output>,
+  buffer: Uint8Array
+): Output
 
 export type { State, Encoder, Raw, StringEncoder, AddressInput, Address }
