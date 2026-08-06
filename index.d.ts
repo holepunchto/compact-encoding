@@ -154,17 +154,18 @@ export function record<T = unknown>(
 ): Encoder<Record<string, T>>
 export const stringRecord: Encoder<Record<string, string>>
 
-export function from(enc: 'ascii'): Raw['ascii']
-export function from(enc: 'utf-8' | 'utf8'): Raw['utf8']
-export function from(enc: 'hex'): Raw['hex']
-export function from(enc: 'base64'): Raw['base64']
+export function from(name: 'ascii'): Raw['ascii']
+export function from(name: 'utf-8' | 'utf8'): Raw['utf8']
+export function from(name: 'hex'): Raw['hex']
+export function from(name: 'base64'): Raw['base64']
 export function from(
-  enc: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'
+  name: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'
 ): Raw['ucs2']
-export function from(enc: 'ndjson'): Raw['ndjson']
-export function from(enc: 'json'): Raw['json']
-export function from(enc: 'binary' | string): Raw['binary']
+export function from(name: 'ndjson'): Raw['ndjson']
+export function from(name: 'json'): Raw['json']
+export function from(name: 'binary' | string): Raw['binary']
 export function from<I, O>(enc: Encoder<I, O>): Encoder<I, O>
+export function from(abstractEncodingOrCodec: unknown): Encoder
 
 export function encode<Input = unknown, Output = Input>(
   enc: Encoder<Input, Output>,
