@@ -43,7 +43,7 @@ interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
   ucs2: Encoder<string>
   utf16le: Encoder<string>
 
-  array: <T>(enc: Encoder<T>) => Encoder<T[]>
+  array: <I, O = I>(enc: Encoder<I, O>) => Encoder<I[], O[]>
 
   json: Encoder<unknown>
   ndjson: Encoder<unknown>
@@ -120,7 +120,7 @@ export function fixed(n: number): Encoder<Uint8Array>
 export const fixed32: Encoder<Uint8Array>
 export const fixed64: Encoder<Uint8Array>
 
-export function array<I, O>(enc: Encoder<I, O>): Encoder<I, O[]>
+export function array<I, O>(enc: Encoder<I, O>): Encoder<I[], O[]>
 
 export function frame<I, O>(enc: Encoder<I, O>): Encoder<I, O>
 
@@ -148,11 +148,33 @@ export const ipv6Address: Encoder<AddressInput, Address<6>>
 export const ip: Encoder<string>
 export const ipAddress: Encoder<AddressInput, Address>
 
-export function record<T = unknown>(
-  keyEncoding: Encoder,
-  valueEncoder: Encoder<T>
-): Encoder<Record<string, T>>
+export function record<I, O = I>(
+  keyEncoding: Encoder<string>,
+  valueEncoder: Encoder<I, O>
+): Encoder<Record<string, I>, Record<string, O>>
+
 export const stringRecord: Encoder<Record<string, string>>
+
+interface CodecLike<Input, Output = Input> {
+  encode(value: Input): Uint8Array
+  decode(buffer: Uint8Array): Output
+}
+
+interface AbstractEncode<Input> {
+  (value: Input, buffer: Uint8Array, offset: number): unknown
+  bytes: number
+}
+
+interface AbstractDecode<Output> {
+  (buffer: Uint8Array, start: number, end: number): Output
+  bytes: number
+}
+
+interface AbstractEncodingLike<Input, Output = Input> {
+  encodingLength(value: Input): number
+  encode: AbstractEncode<Input>
+  decode: AbstractDecode<Output>
+}
 
 export function from(name: 'ascii'): Raw['ascii']
 export function from(name: 'utf-8' | 'utf8'): Raw['utf8']
@@ -165,7 +187,8 @@ export function from(name: 'ndjson'): Raw['ndjson']
 export function from(name: 'json'): Raw['json']
 export function from(name: 'binary' | string): Raw['binary']
 export function from<I, O>(enc: Encoder<I, O>): Encoder<I, O>
-export function from(abstractEncodingOrCodec: unknown): Encoder
+export function from<I, O>(enc: CodecLike<I, O>): Encoder<I, O>
+export function from<I, O>(enc: AbstractEncodingLike<I, O>): Encoder<I, O>
 
 export function encode<Input = unknown, Output = Input>(
   enc: Encoder<Input, Output>,
