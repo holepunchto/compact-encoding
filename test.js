@@ -2,6 +2,9 @@ const enc = require('./')
 const test = require('brittle')
 const b4a = require('b4a')
 
+const MAX_SAFE_INT = 2 ** 52 - 1
+const MIN_SAFE_INT = -(2 ** 52)
+
 const FIRST_UNSAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER) + 1n
 
 test('uint', function (t) {
@@ -247,6 +250,36 @@ test('integers beyond the safe range throw instead of silently corrupting', func
   )
   t.exception(() => enc.uint64.decode(enc.state(0, 8, uint64(unsafe, true))))
   t.exception(() => enc.uint64be.decode(enc.state(0, 8, uint64(unsafe, false))))
+})
+
+test('int rejects values outside the range it can carry', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  // Zig-zag doubles the magnitude before writing it as a uint, so an int only
+  // reaches half as far as a uint of the same width does.
+  t.is(enc.decode(enc.int, enc.encode(enc.int, MAX_SAFE_INT)), MAX_SAFE_INT)
+  t.is(enc.decode(enc.int, enc.encode(enc.int, MIN_SAFE_INT)), MIN_SAFE_INT)
+
+  t.exception(() => enc.int.encode(state, MAX_SAFE_INT + 1), /use bigint/)
+  t.exception(() => enc.int.encode(state, MIN_SAFE_INT - 1), /use bigint/)
+  t.exception(
+    () => enc.int.encode(state, Number.MAX_SAFE_INTEGER),
+    /use bigint/
+  )
+  t.exception(
+    () => enc.int.encode(state, Number.MIN_SAFE_INTEGER),
+    /use bigint/
+  )
+
+  // Values with no integer to write are turned away by the same check.
+  t.exception(() => enc.int.encode(state, Infinity), /use bigint/)
+  t.exception(() => enc.int.encode(state, -Infinity), /use bigint/)
+  t.exception(() => enc.int.encode(state, NaN), /use bigint/)
+
+  // The rejection lands before any space is reserved for the value.
+  const empty = enc.state()
+  t.exception(() => enc.int.preencode(empty, MAX_SAFE_INT + 1))
+  t.is(empty.end, 0)
 })
 
 test('float64', function (t) {
