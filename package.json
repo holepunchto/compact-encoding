@@ -6,10 +6,13 @@
   "types": "index.d.ts",
   "files": [
     "endian.js",
+    "endian.d.ts",
     "index.js",
     "index.d.ts",
     "lexint.js",
-    "raw.js"
+    "lexint.d.ts",
+    "raw.js",
+    "raw.d.ts"
   ],
   "dependencies": {
     "b4a": "^1.3.0"
