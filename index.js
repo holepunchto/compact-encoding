@@ -2,6 +2,11 @@ const b4a = require('b4a')
 
 const { BE } = require('./endian')
 
+// Zig-zag doubles the magnitude of a value before it is written as a uint, so
+// an int only reaches half as far as a uint of the same width does.
+const MAX_SAFE_INT = 2 ** 52 - 1
+const MIN_SAFE_INT = -(2 ** 52)
+
 exports.state = function (start = 0, end = 0, buffer = null) {
   return { start, end, buffer }
 }
@@ -1064,6 +1069,7 @@ function zigZagDecodeInt(n) {
 }
 
 function zigZagEncodeInt(n) {
+  validateInt(n)
   // 0, -1, 1, -2, 2, ...
   return n < 0 ? 2 * -n - 1 : n === 0 ? 0 : 2 * n
 }
@@ -1092,21 +1098,35 @@ function zigZagEncodeBigInt(n) {
 }
 
 function validateSafeUint(n) {
-  if (n > Number.MAX_SAFE_INTEGER)
-    throw new Error(
-      'uint is greater than the maximum safe integer, use biguint/bigint'
-    )
-  return n
+  if (n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
+
+  throw outsideUintRange()
 }
 
 function validateUint(n) {
-  if (n >= 0 === false /* Handles NaN as well */)
-    throw new Error('uint must be positive')
-  // Beyond this, Number arithmetic loses precision and silently corrupts the
-  // encoding. The zig-zag int codecs route through here too, so this also
-  // guards int values whose doubled magnitude exceeds the safe range.
-  if (n > Number.MAX_SAFE_INTEGER)
-    throw new Error(
-      'integer is greater than the maximum safe integer, use biguint/bigint'
-    )
+  if (n >= 0 && n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
+
+  throw outsideUintRange()
+}
+
+function validateInt(n) {
+  if (n >= MIN_SAFE_INT && n <= MAX_SAFE_INT) return n // Handles NaN as well
+
+  throw outsideIntRange()
+}
+
+// The validations above sit on the hottest paths in the library and are small
+// enough to be inlined, which building a message inline would put a stop to.
+// Kept out here, the message costs nothing until it is actually thrown.
+
+function outsideUintRange() {
+  return new Error(
+    `uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`
+  )
+}
+
+function outsideIntRange() {
+  return new Error(
+    `int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`
+  )
 }
