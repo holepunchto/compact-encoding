@@ -190,11 +190,17 @@ export function from<I, O>(enc: Encoder<I, O>): Encoder<I, O>
 export function from<I, O>(enc: CodecLike<I, O>): Encoder<I, O>
 export function from<I, O>(enc: AbstractEncodingLike<I, O>): Encoder<I, O>
 
+/**
+ * Encodes `val` into `state.buffer` at position `state.start`. Updates `state.start` to point after the encoded value when done.
+ */
 export function encode<Input = unknown, Output = Input>(
   enc: Encoder<Input, Output>,
   m: Input
 ): Uint8Array
 
+/**
+ * Decodes a value from `state.buffer` as position `state.start`. Updates `state.start` to point after the decoded value when done in the buffer.
+ */
 export function decode<Input = unknown, Output = Input>(
   enc: Encoder<Input, Output>,
   buffer: Uint8Array
