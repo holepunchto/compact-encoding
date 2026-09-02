@@ -24,7 +24,7 @@
   },
   "scripts": {
     "format": "prettier . --write",
-    "test": "prettier . --check && brittle test.js"
+    "test": "prettier . --check && brittle-node test.js"
   },
   "repository": {
     "type": "git",
