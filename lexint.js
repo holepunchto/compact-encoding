@@ -79,9 +79,7 @@ function decode(state) {
   }
 
   if (flag < 253) {
-    return (
-      (state.buffer[state.start++] << 8) + state.buffer[state.start++] + max
-    )
+    return (state.buffer[state.start++] << 8) + state.buffer[state.start++] + max
   }
 
   if (flag < 254) {

@@ -176,9 +176,7 @@ const uint56 = (exports.uint56 = {
   },
   decode(state) {
     if (state.end - state.start < 7) throw new Error('Out of bounds')
-    return validateSafeUint(
-      uint24.decode(state) + 0x1000000 * uint32.decode(state)
-    )
+    return validateSafeUint(uint24.decode(state) + 0x1000000 * uint32.decode(state))
   }
 })
 
@@ -194,9 +192,7 @@ const uint64 = (exports.uint64 = {
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    return validateSafeUint(
-      uint32.decode(state) + 0x100000000 * uint32.decode(state)
-    )
+    return validateSafeUint(uint32.decode(state) + 0x100000000 * uint32.decode(state))
   }
 })
 
@@ -212,9 +208,7 @@ exports.uint64be = {
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    return validateSafeUint(
-      0x100000000 * uint32be.decode(state) + uint32be.decode(state)
-    )
+    return validateSafeUint(0x100000000 * uint32be.decode(state) + uint32be.decode(state))
   }
 }
 
@@ -233,21 +227,13 @@ const biguint64 = (exports.biguint64 = {
     state.end += 8
   },
   encode(state, n) {
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     view.setBigUint64(0, n, true) // little endian
     state.start += 8
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     const n = view.getBigUint64(0, true) // little endian
     state.start += 8
     return n
@@ -267,11 +253,7 @@ const biguint = (exports.biguint = {
     let len = 0
     for (let m = n; m; m = m >> 64n) len++
     uint.encode(state, len)
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8 * len
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
     for (let m = n, i = 0; m; m = m >> 64n, i += 8) {
       view.setBigUint64(i, BigInt.asUintN(64, m), true) // little endian
     }
@@ -280,14 +262,9 @@ const biguint = (exports.biguint = {
   decode(state) {
     const len = uint.decode(state)
     if (state.end - state.start < 8 * len) throw new Error('Out of bounds')
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8 * len
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
     let n = 0n
-    for (let i = len - 1; i >= 0; i--)
-      n = (n << 64n) + view.getBigUint64(i * 8, true) // little endian
+    for (let i = len - 1; i >= 0; i--) n = (n << 64n) + view.getBigUint64(i * 8, true) // little endian
     state.start += 8 * len
     return n
   }
@@ -302,21 +279,13 @@ exports.float32 = {
     state.end += 4
   },
   encode(state, n) {
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      4
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 4)
     view.setFloat32(0, n, true) // little endian
     state.start += 4
   },
   decode(state) {
     if (state.end - state.start < 4) throw new Error('Out of bounds')
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      4
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 4)
     const float = view.getFloat32(0, true) // little endian
     state.start += 4
     return float
@@ -328,21 +297,13 @@ exports.float64 = {
     state.end += 8
   },
   encode(state, n) {
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     view.setFloat64(0, n, true) // little endian
     state.start += 8
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const view = new DataView(
-      state.buffer.buffer,
-      state.start + state.buffer.byteOffset,
-      8
-    )
+    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
     const float = view.getFloat64(0, true) // little endian
     state.start += 8
     return float
@@ -508,12 +469,7 @@ function string(encoding) {
     decode(state) {
       const len = uint.decode(state)
       if (state.end - state.start < len) throw new Error('Out of bounds')
-      return b4a.toString(
-        state.buffer,
-        encoding,
-        state.start,
-        (state.start += len)
-      )
+      return b4a.toString(state.buffer, encoding, state.start, (state.start += len))
     },
     fixed(n) {
       return {
@@ -526,12 +482,7 @@ function string(encoding) {
         },
         decode(state) {
           if (state.end - state.start < n) throw new Error('Out of bounds')
-          return b4a.toString(
-            state.buffer,
-            encoding,
-            state.start,
-            (state.start += n)
-          )
+          return b4a.toString(state.buffer, encoding, state.start, (state.start += n))
         }
       }
     }
@@ -793,10 +744,7 @@ const ipv4 = (exports.ipv4 = {
       let n = 0
       let c
 
-      while (
-        i < string.length &&
-        (c = string.charCodeAt(i++)) !== /* . */ 0x2e
-      ) {
+      while (i < string.length && (c = string.charCodeAt(i++)) !== /* . */ 0x2e) {
         n = n * 10 + (c - /* 0 */ 0x30)
       }
 
@@ -836,10 +784,7 @@ const ipv6 = (exports.ipv6 = {
       let n = 0
       let c
 
-      while (
-        i < string.length &&
-        (c = string.charCodeAt(i++)) !== /* : */ 0x3a
-      ) {
+      while (i < string.length && (c = string.charCodeAt(i++)) !== /* : */ 0x3a) {
         if (c >= 0x30 && c <= 0x39) n = n * 0x10 + (c - /* 0 */ 0x30)
         else if (c >= 0x41 && c <= 0x46) n = n * 0x10 + (c - /* A */ 0x41 + 10)
         else if (c >= 0x61 && c <= 0x66) n = n * 0x10 + (c - /* a */ 0x61 + 10)
@@ -856,9 +801,7 @@ const ipv6 = (exports.ipv6 = {
 
     if (split !== null) {
       const offset = end - state.start
-      state.buffer
-        .copyWithin(split + offset, split)
-        .fill(0, split, split + offset)
+      state.buffer.copyWithin(split + offset, split).fill(0, split, split + offset)
     }
 
     state.start = end
@@ -866,45 +809,21 @@ const ipv6 = (exports.ipv6 = {
   decode(state) {
     if (state.end - state.start < 16) throw new Error('Out of bounds')
     return (
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16) +
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16) +
       ':' +
-      (
-        state.buffer[state.start++] * 256 +
-        state.buffer[state.start++]
-      ).toString(16)
+      (state.buffer[state.start++] * 256 + state.buffer[state.start++]).toString(16)
     )
   }
 })
@@ -1149,13 +1068,9 @@ function validateInt(n) {
 // Kept out here, the message costs nothing until it is actually thrown.
 
 function outsideUintRange() {
-  return new Error(
-    `uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`
-  )
+  return new Error(`uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`)
 }
 
 function outsideIntRange() {
-  return new Error(
-    `int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`
-  )
+  return new Error(`int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`)
 }

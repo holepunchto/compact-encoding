@@ -180,9 +180,7 @@ export function from(name: 'ascii'): Raw['ascii']
 export function from(name: 'utf-8' | 'utf8'): Raw['utf8']
 export function from(name: 'hex'): Raw['hex']
 export function from(name: 'base64'): Raw['base64']
-export function from(
-  name: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'
-): Raw['ucs2']
+export function from(name: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'): Raw['ucs2']
 export function from(name: 'ndjson'): Raw['ndjson']
 export function from(name: 'json'): Raw['json']
 export function from(name: 'binary' | string): Raw['binary']
