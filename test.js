@@ -1453,6 +1453,17 @@ test('stringRecord', function (t) {
   )
 })
 
+test('bitarray', function (t) {
+  t.alike(enc.decode(enc.bitarray, enc.encode(enc.bitarray, [false, true])), [false, true])
+
+  const big = []
+  while (big.length < 641) {
+    big.push(Math.random() < 0.5)
+  }
+
+  t.alike(enc.decode(enc.bitarray, enc.encode(enc.bitarray, big)), big)
+})
+
 function uint64(n, le) {
   const buf = b4a.alloc(8)
   const view = new DataView(buf.buffer, buf.byteOffset, 8)

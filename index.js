@@ -417,6 +417,35 @@ exports.arraybuffer = {
   }
 }
 
+exports.bitarray = {
+  preencode(state, m) {
+    uint.preencode(state, m.length)
+    state.end += Math.ceil(m.length / 8)
+  },
+  encode(state, m) {
+    uint.encode(state, m.length)
+    for (let i = 0; i < m.length; i += 8) {
+      let byte = 0
+      for (let j = 0; j < 8 && i + j < m.length; j++) {
+        if (m[i + j]) byte |= 1 << j
+      }
+      state.buffer[state.start++] = byte
+    }
+  },
+  decode(state) {
+    const n = uint.decode(state)
+    if (state.end - state.start < Math.ceil(n / 8)) throw new Error('Out of bounds')
+    const m = new Array(n)
+    for (let i = 0; i < n; i += 8) {
+      const byte = state.buffer[state.start++]
+      for (let j = 0; j < 8 && i + j < n; j++) {
+        m[i + j] = (byte & (1 << j)) !== 0
+      }
+    }
+    return m
+  }
+}
+
 function typedarray(TypedArray, swap) {
   const n = TypedArray.BYTES_PER_ELEMENT
 
