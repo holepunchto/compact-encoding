@@ -1368,7 +1368,7 @@ test('bitarray', function (t) {
 
   t.alike(enc.decode(enc.bitarray, b4a.from([1, 0b0])), [false], 'decodes 1 bit as booleans')
 
-  // OOB erro
+  // OOB error
   t.exception(
     () => enc.decode(enc.bitarray, b4a.from([9, 0b10101010])),
     /Out of bounds/,
