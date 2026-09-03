@@ -87,6 +87,7 @@ export const buffer: Encoder<Uint8Array>
 export const optionalBuffer: Encoder<Uint8Array | null>
 export const binary: Encoder<string | Uint8Array, Uint8Array>
 export const arraybuffer: Encoder<ArrayBuffer>
+export const bitarray: Encoder<Array<0 | 1 | boolean>, boolean[]>
 
 export const uint8array: Encoder<Uint8Array>
 export const uint16array: Encoder<Uint16Array>
