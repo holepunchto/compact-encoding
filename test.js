@@ -1316,14 +1316,64 @@ test('stringRecord', function (t) {
 })
 
 test('bitarray', function (t) {
-  t.alike(enc.decode(enc.bitarray, enc.encode(enc.bitarray, [false, true])), [false, true])
+  t.alike(
+    enc.decode(enc.bitarray, enc.encode(enc.bitarray, [false, true])),
+    [false, true],
+    'supports booleans as input'
+  )
 
   const big = []
   while (big.length < 641) {
     big.push(Math.random() < 0.5)
   }
 
-  t.alike(enc.decode(enc.bitarray, enc.encode(enc.bitarray, big)), big)
+  t.alike(enc.decode(enc.bitarray, enc.encode(enc.bitarray, big)), big, 'fuzz big array')
+
+  // Wire assertions
+  t.alike(
+    enc.encode(enc.bitarray, [0, 1, 0, 1]),
+    b4a.from([4, 0b1010]),
+    'outputs size then bit packed bytes'
+  )
+
+  t.alike(
+    enc.encode(enc.bitarray, [0, 1, 0, 1, 1, 1, 1, 1, 1]),
+    b4a.from([9, 0b11111010, 0b1]),
+    'encodes 9bits'
+  )
+
+  t.alike(
+    enc.decode(enc.bitarray, b4a.from([17, 0b11110000, 0b10101010, 0b1])),
+    [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true
+    ],
+    'decodes 17bits as booleans'
+  )
+
+  t.alike(enc.decode(enc.bitarray, b4a.from([1, 0b0])), [false], 'decodes 1 bit as booleans')
+
+  // OOB erro
+  t.exception(
+    () => enc.decode(enc.bitarray, b4a.from([9, 0b10101010])),
+    /Out of bounds/,
+    'throws error when passed buffer thats too small'
+  )
 })
 
 function uint64(n, le) {
