@@ -123,6 +123,7 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.raw.float32array` - Encodes a float32array without a length prefixed.
 - `cenc.float64array` - Encodes a float64array with its element length uint prefixed.
 - `cenc.raw.float64array` - Encodes a float64array without a length prefixed.
+- `cenc.bitarray` - Encodes an array of bits or booleans with its length uint prefixed. Decoding returns array of booleans.
 - `cenc.bool` - Encodes a boolean as 1 or 0.
 - `cenc.string`, `cenc.utf8` - Encodes a utf-8 string, similar to buffer.
 - `cenc.raw.string`, `cenc.raw.utf8` - Encodes a utf-8 string without a length prefixed.
