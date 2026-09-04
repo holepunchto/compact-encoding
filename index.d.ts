@@ -87,6 +87,7 @@ export const buffer: Encoder<Uint8Array>
 export const optionalBuffer: Encoder<Uint8Array | null>
 export const binary: Encoder<string | Uint8Array, Uint8Array>
 export const arraybuffer: Encoder<ArrayBuffer>
+export const bitarray: Encoder<Array<0 | 1 | boolean>, boolean[]>
 
 export const uint8array: Encoder<Uint8Array>
 export const uint16array: Encoder<Uint16Array>
@@ -180,9 +181,7 @@ export function from(name: 'ascii'): Raw['ascii']
 export function from(name: 'utf-8' | 'utf8'): Raw['utf8']
 export function from(name: 'hex'): Raw['hex']
 export function from(name: 'base64'): Raw['base64']
-export function from(
-  name: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'
-): Raw['ucs2']
+export function from(name: 'utf16-le' | 'utf16le' | 'ucs-2' | 'ucs2'): Raw['ucs2']
 export function from(name: 'ndjson'): Raw['ndjson']
 export function from(name: 'json'): Raw['json']
 export function from(name: 'binary' | string): Raw['binary']
