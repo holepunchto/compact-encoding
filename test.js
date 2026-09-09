@@ -796,6 +796,72 @@ test('raw buffer', function (t) {
   t.alike(enc.raw.buffer.decode(state), b4a.alloc(0))
 })
 
+test('fixed8', function (t) {
+  const state = enc.state()
+
+  enc.fixed8.preencode(state, b4a.alloc(8).fill('a'))
+  t.alike(state, enc.state(0, 8))
+  enc.fixed8.preencode(state, b4a.alloc(8).fill('b'))
+  t.alike(state, enc.state(0, 16))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.fixed8.encode(state, b4a.alloc(8).fill('a'))
+  t.alike(state, enc.state(8, 16, b4a.alloc(16).fill('a', 0, 8)))
+  enc.fixed8.encode(state, b4a.alloc(8).fill('b'))
+  t.alike(state, enc.state(16, 16, b4a.alloc(16).fill('a', 0, 8).fill('b', 8, 16)))
+
+  state.start = 0
+  t.alike(enc.fixed8.decode(state), b4a.alloc(8).fill('a'))
+  t.alike(enc.fixed8.decode(state), b4a.alloc(8).fill('b'))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.fixed8.decode(state))
+})
+
+test('fixed16', function (t) {
+  const state = enc.state()
+
+  enc.fixed16.preencode(state, b4a.alloc(16).fill('a'))
+  t.alike(state, enc.state(0, 16))
+  enc.fixed16.preencode(state, b4a.alloc(16).fill('b'))
+  t.alike(state, enc.state(0, 32))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.fixed16.encode(state, b4a.alloc(16).fill('a'))
+  t.alike(state, enc.state(16, 32, b4a.alloc(32).fill('a', 0, 16)))
+  enc.fixed16.encode(state, b4a.alloc(16).fill('b'))
+  t.alike(state, enc.state(32, 32, b4a.alloc(32).fill('a', 0, 16).fill('b', 16, 32)))
+
+  state.start = 0
+  t.alike(enc.fixed16.decode(state), b4a.alloc(16).fill('a'))
+  t.alike(enc.fixed16.decode(state), b4a.alloc(16).fill('b'))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.fixed16.decode(state))
+})
+
+test('fixed24', function (t) {
+  const state = enc.state()
+
+  enc.fixed24.preencode(state, b4a.alloc(24).fill('a'))
+  t.alike(state, enc.state(0, 24))
+  enc.fixed24.preencode(state, b4a.alloc(24).fill('b'))
+  t.alike(state, enc.state(0, 48))
+
+  state.buffer = b4a.alloc(state.end)
+  enc.fixed24.encode(state, b4a.alloc(24).fill('a'))
+  t.alike(state, enc.state(24, 48, b4a.alloc(48).fill('a', 0, 24)))
+  enc.fixed24.encode(state, b4a.alloc(24).fill('b'))
+  t.alike(state, enc.state(48, 48, b4a.alloc(48).fill('a', 0, 24).fill('b', 24, 48)))
+
+  state.start = 0
+  t.alike(enc.fixed24.decode(state), b4a.alloc(24).fill('a'))
+  t.alike(enc.fixed24.decode(state), b4a.alloc(24).fill('b'))
+  t.is(state.start, state.end)
+
+  t.exception(() => enc.fixed24.decode(state))
+})
+
 test('fixed32', function (t) {
   const state = enc.state()
 
@@ -869,10 +935,16 @@ test('error for incorrect buffer sizes when encoding fixed-length buffers', func
   const smallbuf = b4a.from('aa', 'hex')
   const bigBuf = b4a.from('aa'.repeat(500), 'hex')
 
+  t.exception(() => enc.encode(enc.fixed8, smallbuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed16, smallbuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed24, smallbuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed32, smallbuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed64, smallbuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed(100), smallbuf), /Incorrect buffer size/)
 
+  t.exception(() => enc.encode(enc.fixed8, bigBuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed16, bigBuf), /Incorrect buffer size/)
+  t.exception(() => enc.encode(enc.fixed24, bigBuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed32, bigBuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed64, bigBuf), /Incorrect buffer size/)
   t.exception(() => enc.encode(enc.fixed(100), bigBuf), /Incorrect buffer size/)

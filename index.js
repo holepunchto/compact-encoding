@@ -525,6 +525,9 @@ const fixed = (exports.fixed = function fixed(n) {
   }
 })
 
+exports.fixed8 = fixed(8)
+exports.fixed16 = fixed(16)
+exports.fixed24 = fixed(24)
 exports.fixed32 = fixed(32)
 exports.fixed64 = fixed(64)
 

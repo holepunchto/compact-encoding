@@ -140,6 +140,9 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.utf16le`, `cenc.ucs2` - Encodes a utf16le string.
 - `cenc.raw.utf16le`, `cenc.raw.ucs2` - Encodes a utf16le string without a length prefixed.
 - `cenc.utf16le.fixed(n)`, `cenc.ucs2.fixed(n)` - Encodes a fixed size utf16le string.
+- `cenc.fixed8` - Encodes a fixed 8 byte buffer.
+- `cenc.fixed16` - Encodes a fixed 16 byte buffer.
+- `cenc.fixed24` - Encodes a fixed 24 byte buffer.
 - `cenc.fixed32` - Encodes a fixed 32 byte buffer.
 - `cenc.fixed64` - Encodes a fixed 64 byte buffer.
 - `cenc.fixed(n)` - Makes a fixed sized encoder.
