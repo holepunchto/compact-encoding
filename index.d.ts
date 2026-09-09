@@ -118,6 +118,9 @@ export const utf16le: StringEncoder<string>
 export const bool: Encoder<boolean>
 
 export function fixed(n: number): Encoder<Uint8Array>
+export const fixed8: Encoder<Uint8Array>
+export const fixed16: Encoder<Uint8Array>
+export const fixed24: Encoder<Uint8Array>
 export const fixed32: Encoder<Uint8Array>
 export const fixed64: Encoder<Uint8Array>
 
