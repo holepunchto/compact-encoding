@@ -521,6 +521,36 @@ function asciiLength(s) {
   return n
 }
 
+// Returns false, leaving the state untouched, if the string is not ASCII. The
+// string is checked while being written, which saves a pass over it compared
+// to measuring it first.
+function asciiEncode(state, s) {
+  const len = s.length
+
+  if (len > ASCII_ENCODE_MAX) return false
+
+  const start = state.start
+
+  uint.encode(state, len)
+
+  const buffer = state.buffer
+  const offset = state.start
+
+  for (let i = 0; i < len; i++) {
+    const c = s.charCodeAt(i)
+
+    if (c > 0x7f) {
+      state.start = start
+      return false
+    }
+
+    buffer[offset + i] = c
+  }
+
+  state.start = offset + len
+  return true
+}
+
 // Returns null if the range is not ASCII, in which case it has to be decoded by
 // the native codec. Eight code units per call amortises the call overhead of
 // `String.fromCharCode` without growing the argument list unreasonably.
@@ -568,18 +598,7 @@ const utf8 = {
     state.end += len
   },
   encode(state, s) {
-    const len = asciiLength(s)
-
-    if (len === -1) return nativeUTF8.encode(state, s)
-
-    uint.encode(state, len)
-
-    const buffer = state.buffer
-    const start = state.start
-
-    for (let i = 0; i < len; i++) buffer[start + i] = s.charCodeAt(i)
-
-    state.start = start + len
+    if (!asciiEncode(state, s)) nativeUTF8.encode(state, s)
   },
   decode(state) {
     const len = uint.decode(state)
