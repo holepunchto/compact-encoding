@@ -222,19 +222,32 @@ exports.int48 = zigZagInt(uint48)
 exports.int56 = zigZagInt(uint56)
 exports.int64 = zigZagInt(uint64)
 
+// Constructing a DataView costs more than the read or write it is used for, so
+// keep one per buffer.
+const views = new WeakMap()
+
+function viewOf(buffer) {
+  let view = views.get(buffer)
+
+  if (view === undefined) {
+    view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    views.set(buffer, view)
+  }
+
+  return view
+}
+
 const biguint64 = (exports.biguint64 = {
   preencode(state, n) {
     state.end += 8
   },
   encode(state, n) {
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    view.setBigUint64(0, n, true) // little endian
+    viewOf(state.buffer).setBigUint64(state.start, n, true) // little endian
     state.start += 8
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    const n = view.getBigUint64(0, true) // little endian
+    const n = viewOf(state.buffer).getBigUint64(state.start, true) // little endian
     state.start += 8
     return n
   }
@@ -253,8 +266,8 @@ const biguint = (exports.biguint = {
     let len = 0
     for (let m = n; m; m = m >> 64n) len++
     uint.encode(state, len)
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
-    for (let m = n, i = 0; m; m = m >> 64n, i += 8) {
+    const view = viewOf(state.buffer)
+    for (let m = n, i = state.start; m; m = m >> 64n, i += 8) {
       view.setBigUint64(i, BigInt.asUintN(64, m), true) // little endian
     }
     state.start += 8 * len
@@ -262,9 +275,11 @@ const biguint = (exports.biguint = {
   decode(state) {
     const len = uint.decode(state)
     if (state.end - state.start < 8 * len) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
+    const view = viewOf(state.buffer)
     let n = 0n
-    for (let i = len - 1; i >= 0; i--) n = (n << 64n) + view.getBigUint64(i * 8, true) // little endian
+    for (let i = len - 1; i >= 0; i--) {
+      n = (n << 64n) + view.getBigUint64(state.start + i * 8, true) // little endian
+    }
     state.start += 8 * len
     return n
   }
@@ -273,21 +288,6 @@ const biguint = (exports.biguint = {
 exports.bigint = zigZagBigInt(biguint)
 
 exports.lexint = require('./lexint')
-
-// Constructing a DataView costs more than the read or write it is used for, so
-// keep one per buffer.
-const views = new WeakMap()
-
-function viewOf(buffer) {
-  let view = views.get(buffer)
-
-  if (view === undefined) {
-    view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
-    views.set(buffer, view)
-  }
-
-  return view
-}
 
 exports.float32 = {
   preencode(state, n) {
