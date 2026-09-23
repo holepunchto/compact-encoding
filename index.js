@@ -554,16 +554,15 @@ function asciiDecode(buffer, start, end) {
   return s
 }
 
+const nativeUTF8 = string('utf-8')
+
 const utf8 = {
+  ...nativeUTF8,
+
   preencode(state, s) {
     const len = asciiLength(s)
 
-    if (len === -1) {
-      const byteLength = b4a.byteLength(s, 'utf-8')
-      uint.preencode(state, byteLength)
-      state.end += byteLength
-      return
-    }
+    if (len === -1) return nativeUTF8.preencode(state, s)
 
     uint.preencode(state, len)
     state.end += len
@@ -571,13 +570,7 @@ const utf8 = {
   encode(state, s) {
     const len = asciiLength(s)
 
-    if (len === -1) {
-      const byteLength = b4a.byteLength(s, 'utf-8')
-      uint.encode(state, byteLength)
-      b4a.write(state.buffer, s, state.start, 'utf-8')
-      state.start += byteLength
-      return
-    }
+    if (len === -1) return nativeUTF8.encode(state, s)
 
     uint.encode(state, len)
 
@@ -603,8 +596,7 @@ const utf8 = {
     }
 
     return b4a.toString(buffer, 'utf-8', start, end)
-  },
-  fixed: string('utf-8').fixed
+  }
 }
 
 exports.string = exports.utf8 = utf8
