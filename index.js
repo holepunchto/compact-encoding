@@ -222,19 +222,32 @@ exports.int48 = zigZagInt(uint48)
 exports.int56 = zigZagInt(uint56)
 exports.int64 = zigZagInt(uint64)
 
+// Constructing a DataView costs more than the read or write it is used for, so
+// keep one per buffer.
+const views = new WeakMap()
+
+function viewOf(buffer) {
+  let view = views.get(buffer)
+
+  if (view === undefined) {
+    view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    views.set(buffer, view)
+  }
+
+  return view
+}
+
 const biguint64 = (exports.biguint64 = {
   preencode(state, n) {
     state.end += 8
   },
   encode(state, n) {
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    view.setBigUint64(0, n, true) // little endian
+    viewOf(state.buffer).setBigUint64(state.start, n, true) // little endian
     state.start += 8
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    const n = view.getBigUint64(0, true) // little endian
+    const n = viewOf(state.buffer).getBigUint64(state.start, true) // little endian
     state.start += 8
     return n
   }
@@ -253,8 +266,8 @@ const biguint = (exports.biguint = {
     let len = 0
     for (let m = n; m; m = m >> 64n) len++
     uint.encode(state, len)
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
-    for (let m = n, i = 0; m; m = m >> 64n, i += 8) {
+    const view = viewOf(state.buffer)
+    for (let m = n, i = state.start; m; m = m >> 64n, i += 8) {
       view.setBigUint64(i, BigInt.asUintN(64, m), true) // little endian
     }
     state.start += 8 * len
@@ -262,9 +275,11 @@ const biguint = (exports.biguint = {
   decode(state) {
     const len = uint.decode(state)
     if (state.end - state.start < 8 * len) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8 * len)
+    const view = viewOf(state.buffer)
     let n = 0n
-    for (let i = len - 1; i >= 0; i--) n = (n << 64n) + view.getBigUint64(i * 8, true) // little endian
+    for (let i = len - 1; i >= 0; i--) {
+      n = (n << 64n) + view.getBigUint64(state.start + i * 8, true) // little endian
+    }
     state.start += 8 * len
     return n
   }
@@ -279,14 +294,12 @@ exports.float32 = {
     state.end += 4
   },
   encode(state, n) {
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 4)
-    view.setFloat32(0, n, true) // little endian
+    viewOf(state.buffer).setFloat32(state.start, n, true) // little endian
     state.start += 4
   },
   decode(state) {
     if (state.end - state.start < 4) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 4)
-    const float = view.getFloat32(0, true) // little endian
+    const float = viewOf(state.buffer).getFloat32(state.start, true) // little endian
     state.start += 4
     return float
   }
@@ -297,14 +310,12 @@ exports.float64 = {
     state.end += 8
   },
   encode(state, n) {
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    view.setFloat64(0, n, true) // little endian
+    viewOf(state.buffer).setFloat64(state.start, n, true) // little endian
     state.start += 8
   },
   decode(state) {
     if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const view = new DataView(state.buffer.buffer, state.start + state.buffer.byteOffset, 8)
-    const float = view.getFloat64(0, true) // little endian
+    const float = viewOf(state.buffer).getFloat64(state.start, true) // little endian
     state.start += 8
     return float
   }
@@ -489,7 +500,125 @@ function string(encoding) {
   }
 }
 
-const utf8 = (exports.string = exports.utf8 = string('utf-8'))
+// The native codec costs the same for a two character string as for a sixty
+// character one, so below these lengths a hand-rolled ASCII loop wins.
+const ASCII_ENCODE_MAX = 64
+const ASCII_DECODE_MAX = 56
+
+const fromCharCode = String.fromCharCode
+
+// Returns -1 if the string is not ASCII, in which case its UTF-8 length has to
+// be measured by the native codec.
+function asciiLength(s) {
+  const n = s.length
+
+  if (n > ASCII_ENCODE_MAX) return -1
+
+  for (let i = 0; i < n; i++) {
+    if (s.charCodeAt(i) > 0x7f) return -1
+  }
+
+  return n
+}
+
+// Returns false, leaving the state untouched, if the string is not ASCII. The
+// string is checked while being written, which saves a pass over it compared
+// to measuring it first.
+function asciiEncode(state, s) {
+  const len = s.length
+
+  if (len > ASCII_ENCODE_MAX) return false
+
+  const start = state.start
+
+  uint.encode(state, len)
+
+  const buffer = state.buffer
+  const offset = state.start
+
+  for (let i = 0; i < len; i++) {
+    const c = s.charCodeAt(i)
+
+    if (c > 0x7f) {
+      state.start = start
+      return false
+    }
+
+    buffer[offset + i] = c
+  }
+
+  state.start = offset + len
+  return true
+}
+
+// Returns null if the range is not ASCII, in which case it has to be decoded by
+// the native codec. Eight code units per call amortises the call overhead of
+// `String.fromCharCode` without growing the argument list unreasonably.
+function asciiDecode(buffer, start, end) {
+  let s = ''
+  let i = start
+
+  for (; i + 8 <= end; i += 8) {
+    const c0 = buffer[i]
+    const c1 = buffer[i + 1]
+    const c2 = buffer[i + 2]
+    const c3 = buffer[i + 3]
+    const c4 = buffer[i + 4]
+    const c5 = buffer[i + 5]
+    const c6 = buffer[i + 6]
+    const c7 = buffer[i + 7]
+
+    if ((c0 | c1 | c2 | c3 | c4 | c5 | c6 | c7) > 0x7f) return null
+
+    s += fromCharCode(c0, c1, c2, c3, c4, c5, c6, c7)
+  }
+
+  for (; i < end; i++) {
+    const c = buffer[i]
+
+    if (c > 0x7f) return null
+
+    s += fromCharCode(c)
+  }
+
+  return s
+}
+
+const nativeUTF8 = string('utf-8')
+
+const utf8 = {
+  ...nativeUTF8,
+
+  preencode(state, s) {
+    const len = asciiLength(s)
+
+    if (len === -1) return nativeUTF8.preencode(state, s)
+
+    uint.preencode(state, len)
+    state.end += len
+  },
+  encode(state, s) {
+    if (!asciiEncode(state, s)) nativeUTF8.encode(state, s)
+  },
+  decode(state) {
+    const len = uint.decode(state)
+    if (state.end - state.start < len) throw new Error('Out of bounds')
+
+    const buffer = state.buffer
+    const start = state.start
+    const end = (state.start += len)
+
+    if (len <= ASCII_DECODE_MAX) {
+      const s = asciiDecode(buffer, start, end)
+
+      if (s !== null) return s
+    }
+
+    return b4a.toString(buffer, 'utf-8', start, end)
+  }
+}
+
+exports.string = exports.utf8 = utf8
 exports.ascii = string('ascii')
 exports.hex = string('hex')
 exports.base64 = string('base64')
