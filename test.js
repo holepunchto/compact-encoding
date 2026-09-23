@@ -519,6 +519,13 @@ test('arraybuffer', function (t) {
   t.exception(() => enc.arraybuffer.decode(state))
 })
 
+test('arraybuffer - throws when length exceeds buffer', function (t) {
+  const buf = b4a.from([0x05, 0x00, 0x00, 0x00, 0x40])
+  const state = enc.state(0, buf.byteLength, buf)
+
+  t.exception(() => enc.arraybuffer.decode(state), /Out of bounds/)
+})
+
 test('raw', function (t) {
   const state = enc.state()
 
@@ -1213,6 +1220,14 @@ test('framed', function (t) {
   t.alike(enc.decode(e, b4a.from([0x01, 0x2a])), 42)
   t.alike(enc.encode(e, 4200), b4a.from([0x03, 0xfd, 0x68, 0x10]))
   t.alike(enc.decode(e, b4a.from([0x03, 0xfd, 0x68, 0x10])), 4200)
+})
+
+test('framed - throws instead when length exceeds buffer', function (t) {
+  // frame length 0x0A bytes but the buffer ends immediately after
+  const buf = b4a.from([0x0a, 0x00])
+  const e = enc.frame(enc.raw.buffer)
+
+  t.exception(() => enc.decode(e, buf), /Out of bounds/)
 })
 
 test('port', function (t) {

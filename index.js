@@ -379,6 +379,7 @@ exports.arraybuffer = {
   },
   decode(state) {
     const len = uint.decode(state)
+    if (state.end - state.start < len) throw new Error('Out of bounds')
 
     const b = new ArrayBuffer(len)
     const view = new Uint8Array(b)
@@ -698,6 +699,7 @@ exports.frame = function frame(enc) {
     decode(state) {
       const end = state.end
       const len = uint.decode(state)
+      if (state.start + len > end) throw new Error('Out of bounds')
       state.end = state.start + len
       const m = enc.decode(state)
       state.start = state.end
