@@ -246,6 +246,26 @@ test('int rejects values outside the range it can carry', function (t) {
   t.is(empty.end, 0)
 })
 
+test('non-integers are refused', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception(() => enc.uint.encode(state, 1.5), /uint must be an integer/)
+  t.exception(() => enc.uint.encode(state, 252.5), /uint must be an integer/)
+  t.exception(() => enc.uint.encode(state, 65535.5), /uint must be an integer/)
+  t.exception(() => enc.uint32.encode(state, 1.5), /uint must be an integer/)
+
+  t.exception(() => enc.int.encode(state, 1.5), /int must be an integer/)
+  t.exception(() => enc.int.encode(state, 0.5), /int must be an integer/)
+  t.exception(() => enc.int.encode(state, -1.5), /int must be an integer/)
+
+  const empty = enc.state()
+  t.exception(() => enc.int.preencode(empty, 1.5))
+  t.is(empty.end, 0)
+
+  t.is(enc.decode(enc.uint, enc.encode(enc.uint, -0)), 0)
+  t.is(enc.decode(enc.int, enc.encode(enc.int, -0)), 0)
+})
+
 test('float64', function (t) {
   const state = enc.state()
 
