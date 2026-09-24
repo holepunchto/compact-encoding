@@ -1494,15 +1494,15 @@ function validateSafeUint(n) {
 }
 
 function validateUint(n) {
-  if (n >= 0 && n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
-
-  throw outsideUintRange()
+  if (!(n >= 0 && n <= Number.MAX_SAFE_INTEGER)) throw outsideUintRange() // Handles NaN as well
+  if (!Number.isInteger(n)) throw uintNotInteger()
+  return n
 }
 
 function validateInt(n) {
-  if (n >= MIN_SAFE_INT && n <= MAX_SAFE_INT) return n // Handles NaN as well
-
-  throw outsideIntRange()
+  if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange() // Handles NaN as well
+  if (!Number.isInteger(n)) throw intNotInteger()
+  return n
 }
 
 function validateBigUint(n) {
@@ -1525,4 +1525,12 @@ function outsideIntRange() {
 
 function negativeBigUint() {
   return new RangeError('biguint must not be negative')
+}
+
+function uintNotInteger() {
+  return new Error('uint must be an integer')
+}
+
+function intNotInteger() {
+  return new Error('int must be an integer')
 }
