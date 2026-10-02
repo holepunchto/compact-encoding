@@ -550,6 +550,25 @@ test('bigint64', function (t) {
   t.exception(() => enc.bigint64.decode(state))
 })
 
+test('biguint64 refuses a value its width cannot hold', function (t) {
+  const max = 2n ** 64n - 1n
+
+  t.is(enc.decode(enc.biguint64, enc.encode(enc.biguint64, max)), max)
+  t.is(enc.decode(enc.biguint64, enc.encode(enc.biguint64, 0n)), 0n)
+  t.exception.all(() => enc.encode(enc.biguint64, max + 1n), { name: 'RangeError' })
+  t.exception.all(() => enc.encode(enc.biguint64, -1n), { name: 'RangeError' })
+})
+
+test('bigint64 refuses a value its width cannot hold', function (t) {
+  const max = 2n ** 63n - 1n
+  const min = -(2n ** 63n)
+
+  t.is(enc.decode(enc.bigint64, enc.encode(enc.bigint64, max)), max)
+  t.is(enc.decode(enc.bigint64, enc.encode(enc.bigint64, min)), min)
+  t.exception.all(() => enc.encode(enc.bigint64, max + 1n), { name: 'RangeError' })
+  t.exception.all(() => enc.encode(enc.bigint64, min - 1n), { name: 'RangeError' })
+})
+
 test('biguint', function (t) {
   const state = enc.state()
 
