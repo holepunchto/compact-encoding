@@ -13,29 +13,92 @@ exports.state = function (start = 0, end = 0, buffer = null) {
 
 const raw = (exports.raw = require('./raw'))
 
+// The bytes are written out rather than going through the helpers used by the
+// fixed width codecs. No codec is found at more call sites, and every helper it
+// inlines counts against the inlining budget of the caller.
 const uint = (exports.uint = {
   preencode(state, n) {
     state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
   },
   encode(state, n) {
-    if (n <= 0xfc) uint8.encode(state, n)
-    else if (n <= 0xffff) {
-      state.buffer[state.start++] = 0xfd
-      uint16.encode(state, n)
+    const buffer = state.buffer
+    const start = state.start
+
+    if (n <= 0xfc) {
+      validateUint(n)
+      buffer[start] = n
+      state.start = start + 1
+    } else if (n <= 0xffff) {
+      buffer[start] = 0xfd
+      buffer[start + 1] = n
+      buffer[start + 2] = n >>> 8
+      state.start = start + 3
     } else if (n <= 0xffffffff) {
-      state.buffer[state.start++] = 0xfe
-      uint32.encode(state, n)
+      buffer[start] = 0xfe
+      buffer[start + 1] = n
+      buffer[start + 2] = n >>> 8
+      buffer[start + 3] = n >>> 16
+      buffer[start + 4] = n >>> 24
+      state.start = start + 5
     } else {
-      state.buffer[state.start++] = 0xff
-      uint64.encode(state, n)
+      validateUint(n)
+      const r = Math.floor(n / 0x100000000)
+      buffer[start] = 0xff
+      buffer[start + 1] = n
+      buffer[start + 2] = n >>> 8
+      buffer[start + 3] = n >>> 16
+      buffer[start + 4] = n >>> 24
+      buffer[start + 5] = r
+      buffer[start + 6] = r >>> 8
+      buffer[start + 7] = r >>> 16
+      buffer[start + 8] = r >>> 24
+      state.start = start + 9
     }
   },
   decode(state) {
-    const a = uint8.decode(state)
-    if (a <= 0xfc) return a
-    if (a === 0xfd) return uint16.decode(state)
-    if (a === 0xfe) return uint32.decode(state)
-    return uint64.decode(state)
+    const buffer = state.buffer
+    const start = state.start
+    const end = state.end
+
+    if (start >= end) throw new Error('Out of bounds')
+
+    const a = buffer[start]
+
+    if (a <= 0xfc) {
+      state.start = start + 1
+      return a
+    }
+
+    if (a === 0xfd) {
+      if (end - start < 3) throw new Error('Out of bounds')
+      state.start = start + 3
+      return buffer[start + 1] + buffer[start + 2] * 0x100
+    }
+
+    if (a === 0xfe) {
+      if (end - start < 5) throw new Error('Out of bounds')
+      state.start = start + 5
+      return (
+        buffer[start + 1] +
+        buffer[start + 2] * 0x100 +
+        buffer[start + 3] * 0x10000 +
+        buffer[start + 4] * 0x1000000
+      )
+    }
+
+    if (end - start < 9) throw new Error('Out of bounds')
+    state.start = start + 9
+    return validateSafeUint(
+      buffer[start + 1] +
+        buffer[start + 2] * 0x100 +
+        buffer[start + 3] * 0x10000 +
+        buffer[start + 4] * 0x1000000 +
+        (buffer[start + 5] +
+          buffer[start + 6] * 0x100 +
+          buffer[start + 7] * 0x10000 +
+          buffer[start + 8] * 0x1000000) *
+          0x100000000
+    )
   }
 })
 
@@ -59,12 +122,14 @@ const uint16 = (exports.uint16 = {
   },
   encode(state, n) {
     validateUint(n)
-    state.buffer[state.start++] = n
-    state.buffer[state.start++] = n >>> 8
+    write16(state.buffer, state.start, n)
+    state.start += 2
   },
   decode(state) {
-    if (state.end - state.start < 2) throw new Error('Out of bounds')
-    return state.buffer[state.start++] + state.buffer[state.start++] * 0x100
+    const start = state.start
+    if (state.end - start < 2) throw new Error('Out of bounds')
+    state.start = start + 2
+    return read16(state.buffer, start)
   }
 })
 
@@ -74,17 +139,14 @@ const uint24 = (exports.uint24 = {
   },
   encode(state, n) {
     validateUint(n)
-    state.buffer[state.start++] = n
-    state.buffer[state.start++] = n >>> 8
-    state.buffer[state.start++] = n >>> 16
+    write24(state.buffer, state.start, n)
+    state.start += 3
   },
   decode(state) {
-    if (state.end - state.start < 3) throw new Error('Out of bounds')
-    return (
-      state.buffer[state.start++] +
-      state.buffer[state.start++] * 0x100 +
-      state.buffer[state.start++] * 0x10000
-    )
+    const start = state.start
+    if (state.end - start < 3) throw new Error('Out of bounds')
+    state.start = start + 3
+    return read24(state.buffer, start)
   }
 })
 
@@ -94,43 +156,33 @@ const uint32 = (exports.uint32 = {
   },
   encode(state, n) {
     validateUint(n)
-    state.buffer[state.start++] = n
-    state.buffer[state.start++] = n >>> 8
-    state.buffer[state.start++] = n >>> 16
-    state.buffer[state.start++] = n >>> 24
+    write32(state.buffer, state.start, n)
+    state.start += 4
   },
   decode(state) {
-    if (state.end - state.start < 4) throw new Error('Out of bounds')
-    return (
-      state.buffer[state.start++] +
-      state.buffer[state.start++] * 0x100 +
-      state.buffer[state.start++] * 0x10000 +
-      state.buffer[state.start++] * 0x1000000
-    )
+    const start = state.start
+    if (state.end - start < 4) throw new Error('Out of bounds')
+    state.start = start + 4
+    return read32(state.buffer, start)
   }
 })
 
-const uint32be = (exports.uint32be = {
+exports.uint32be = {
   preencode(state, n) {
     state.end += 4
   },
   encode(state, n) {
     validateUint(n)
-    state.buffer[state.start++] = n >>> 24
-    state.buffer[state.start++] = n >>> 16
-    state.buffer[state.start++] = n >>> 8
-    state.buffer[state.start++] = n
+    write32be(state.buffer, state.start, n)
+    state.start += 4
   },
   decode(state) {
-    if (state.end - state.start < 4) throw new Error('Out of bounds')
-    return (
-      state.buffer[state.start++] * 0x1000000 +
-      state.buffer[state.start++] * 0x10000 +
-      state.buffer[state.start++] * 0x100 +
-      state.buffer[state.start++]
-    )
+    const start = state.start
+    if (state.end - start < 4) throw new Error('Out of bounds')
+    state.start = start + 4
+    return read32be(state.buffer, start)
   }
-})
+}
 
 const uint40 = (exports.uint40 = {
   preencode(state, n) {
@@ -138,13 +190,18 @@ const uint40 = (exports.uint40 = {
   },
   encode(state, n) {
     validateUint(n)
-    const r = Math.floor(n / 0x100)
-    uint8.encode(state, n)
-    uint32.encode(state, r)
+    const buffer = state.buffer
+    const start = state.start
+    buffer[start] = n
+    write32(buffer, start + 1, Math.floor(n / 0x100))
+    state.start = start + 5
   },
   decode(state) {
-    if (state.end - state.start < 5) throw new Error('Out of bounds')
-    return uint8.decode(state) + 0x100 * uint32.decode(state)
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 5) throw new Error('Out of bounds')
+    state.start = start + 5
+    return buffer[start] + read32(buffer, start + 1) * 0x100
   }
 })
 
@@ -154,13 +211,18 @@ const uint48 = (exports.uint48 = {
   },
   encode(state, n) {
     validateUint(n)
-    const r = Math.floor(n / 0x10000)
-    uint16.encode(state, n)
-    uint32.encode(state, r)
+    const buffer = state.buffer
+    const start = state.start
+    write16(buffer, start, n)
+    write32(buffer, start + 2, Math.floor(n / 0x10000))
+    state.start = start + 6
   },
   decode(state) {
-    if (state.end - state.start < 6) throw new Error('Out of bounds')
-    return uint16.decode(state) + 0x10000 * uint32.decode(state)
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 6) throw new Error('Out of bounds')
+    state.start = start + 6
+    return read16(buffer, start) + read32(buffer, start + 2) * 0x10000
   }
 })
 
@@ -170,13 +232,18 @@ const uint56 = (exports.uint56 = {
   },
   encode(state, n) {
     validateUint(n)
-    const r = Math.floor(n / 0x1000000)
-    uint24.encode(state, n)
-    uint32.encode(state, r)
+    const buffer = state.buffer
+    const start = state.start
+    write24(buffer, start, n)
+    write32(buffer, start + 3, Math.floor(n / 0x1000000))
+    state.start = start + 7
   },
   decode(state) {
-    if (state.end - state.start < 7) throw new Error('Out of bounds')
-    return validateSafeUint(uint24.decode(state) + 0x1000000 * uint32.decode(state))
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 7) throw new Error('Out of bounds')
+    state.start = start + 7
+    return validateSafeUint(read24(buffer, start) + read32(buffer, start + 3) * 0x1000000)
   }
 })
 
@@ -186,13 +253,18 @@ const uint64 = (exports.uint64 = {
   },
   encode(state, n) {
     validateUint(n)
-    const r = Math.floor(n / 0x100000000)
-    uint32.encode(state, n)
-    uint32.encode(state, r)
+    const buffer = state.buffer
+    const start = state.start
+    write32(buffer, start, n)
+    write32(buffer, start + 4, Math.floor(n / 0x100000000))
+    state.start = start + 8
   },
   decode(state) {
-    if (state.end - state.start < 8) throw new Error('Out of bounds')
-    return validateSafeUint(uint32.decode(state) + 0x100000000 * uint32.decode(state))
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 8) throw new Error('Out of bounds')
+    state.start = start + 8
+    return validateSafeUint(read32(buffer, start) + read32(buffer, start + 4) * 0x100000000)
   }
 })
 
@@ -202,39 +274,208 @@ exports.uint64be = {
   },
   encode(state, n) {
     validateUint(n)
-    const r = Math.floor(n / 0x100000000)
-    uint32be.encode(state, r)
-    uint32be.encode(state, n)
+    const buffer = state.buffer
+    const start = state.start
+    write32be(buffer, start, Math.floor(n / 0x100000000))
+    write32be(buffer, start + 4, n)
+    state.start = start + 8
   },
   decode(state) {
-    if (state.end - state.start < 8) throw new Error('Out of bounds')
-    return validateSafeUint(0x100000000 * uint32be.decode(state) + uint32be.decode(state))
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 8) throw new Error('Out of bounds')
+    state.start = start + 8
+    return validateSafeUint(read32be(buffer, start) * 0x100000000 + read32be(buffer, start + 4))
   }
 }
 
-const int = (exports.int = zigZagInt(uint))
-exports.int8 = zigZagInt(uint8)
-exports.int16 = zigZagInt(uint16)
-exports.int24 = zigZagInt(uint24)
-exports.int32 = zigZagInt(uint32)
-exports.int40 = zigZagInt(uint40)
-exports.int48 = zigZagInt(uint48)
-exports.int56 = zigZagInt(uint56)
-exports.int64 = zigZagInt(uint64)
+function write16(buffer, i, n) {
+  buffer[i] = n
+  buffer[i + 1] = n >>> 8
+}
 
-// Constructing a DataView costs more than the read or write it is used for, so
-// keep one per buffer.
-const views = new WeakMap()
+function write24(buffer, i, n) {
+  buffer[i] = n
+  buffer[i + 1] = n >>> 8
+  buffer[i + 2] = n >>> 16
+}
 
-function viewOf(buffer) {
-  let view = views.get(buffer)
+function write32(buffer, i, n) {
+  buffer[i] = n
+  buffer[i + 1] = n >>> 8
+  buffer[i + 2] = n >>> 16
+  buffer[i + 3] = n >>> 24
+}
 
-  if (view === undefined) {
-    view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
-    views.set(buffer, view)
+function write32be(buffer, i, n) {
+  buffer[i] = n >>> 24
+  buffer[i + 1] = n >>> 16
+  buffer[i + 2] = n >>> 8
+  buffer[i + 3] = n
+}
+
+function read16(buffer, i) {
+  return buffer[i] + buffer[i + 1] * 0x100
+}
+
+function read24(buffer, i) {
+  return buffer[i] + buffer[i + 1] * 0x100 + buffer[i + 2] * 0x10000
+}
+
+function read32(buffer, i) {
+  return buffer[i] + buffer[i + 1] * 0x100 + buffer[i + 2] * 0x10000 + buffer[i + 3] * 0x1000000
+}
+
+function read32be(buffer, i) {
+  return buffer[i] * 0x1000000 + buffer[i + 1] * 0x10000 + buffer[i + 2] * 0x100 + buffer[i + 3]
+}
+
+// The zig-zag codecs are spelled out rather than built by a factory. Closures
+// created from the same function share type feedback, so the call to the
+// underlying codec would turn megamorphic and could no longer be inlined.
+const int = (exports.int = {
+  preencode(state, n) {
+    uint.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint.decode(state))
   }
+})
 
-  return view
+exports.int8 = {
+  preencode(state, n) {
+    uint8.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint8.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint8.decode(state))
+  }
+}
+
+exports.int16 = {
+  preencode(state, n) {
+    uint16.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint16.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint16.decode(state))
+  }
+}
+
+exports.int24 = {
+  preencode(state, n) {
+    uint24.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint24.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint24.decode(state))
+  }
+}
+
+exports.int32 = {
+  preencode(state, n) {
+    uint32.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint32.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint32.decode(state))
+  }
+}
+
+exports.int40 = {
+  preencode(state, n) {
+    uint40.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint40.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint40.decode(state))
+  }
+}
+
+exports.int48 = {
+  preencode(state, n) {
+    uint48.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint48.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint48.decode(state))
+  }
+}
+
+exports.int56 = {
+  preencode(state, n) {
+    uint56.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint56.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint56.decode(state))
+  }
+}
+
+exports.int64 = {
+  preencode(state, n) {
+    uint64.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint64.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint64.decode(state))
+  }
+}
+
+// Values are converted through a scratch array and copied byte by byte, as
+// constructing a DataView over the target costs more than the few reads or
+// writes it would serve in a typical message.
+const f32 = new Float32Array(1)
+const f64 = new Float64Array(1)
+const u64 = new BigUint64Array(1)
+
+const f32Bytes = new Uint8Array(f32.buffer)
+const f64Bytes = new Uint8Array(f64.buffer)
+const u64Bytes = new Uint8Array(u64.buffer)
+
+function writeBigUint64(buffer, i, n) {
+  u64[0] = n
+  if (BE) u64Bytes.reverse()
+  buffer[i] = u64Bytes[0]
+  buffer[i + 1] = u64Bytes[1]
+  buffer[i + 2] = u64Bytes[2]
+  buffer[i + 3] = u64Bytes[3]
+  buffer[i + 4] = u64Bytes[4]
+  buffer[i + 5] = u64Bytes[5]
+  buffer[i + 6] = u64Bytes[6]
+  buffer[i + 7] = u64Bytes[7]
+}
+
+function readBigUint64(buffer, i) {
+  u64Bytes[0] = buffer[i]
+  u64Bytes[1] = buffer[i + 1]
+  u64Bytes[2] = buffer[i + 2]
+  u64Bytes[3] = buffer[i + 3]
+  u64Bytes[4] = buffer[i + 4]
+  u64Bytes[5] = buffer[i + 5]
+  u64Bytes[6] = buffer[i + 6]
+  u64Bytes[7] = buffer[i + 7]
+  if (BE) u64Bytes.reverse()
+  return u64[0]
 }
 
 const biguint64 = (exports.biguint64 = {
@@ -242,18 +483,28 @@ const biguint64 = (exports.biguint64 = {
     state.end += 8
   },
   encode(state, n) {
-    viewOf(state.buffer).setBigUint64(state.start, n, true) // little endian
+    writeBigUint64(state.buffer, state.start, n)
     state.start += 8
   },
   decode(state) {
-    if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const n = viewOf(state.buffer).getBigUint64(state.start, true) // little endian
-    state.start += 8
-    return n
+    const start = state.start
+    if (state.end - start < 8) throw new Error('Out of bounds')
+    state.start = start + 8
+    return readBigUint64(state.buffer, start)
   }
 })
 
-exports.bigint64 = zigZagBigInt(biguint64)
+exports.bigint64 = {
+  preencode(state, n) {
+    biguint64.preencode(state, zigZagEncodeBigInt(n))
+  },
+  encode(state, n) {
+    biguint64.encode(state, zigZagEncodeBigInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeBigInt(biguint64.decode(state))
+  }
+}
 
 const biguint = (exports.biguint = {
   preencode(state, n) {
@@ -266,26 +517,34 @@ const biguint = (exports.biguint = {
     let len = 0
     for (let m = n; m; m = m >> 64n) len++
     uint.encode(state, len)
-    const view = viewOf(state.buffer)
     for (let m = n, i = state.start; m; m = m >> 64n, i += 8) {
-      view.setBigUint64(i, BigInt.asUintN(64, m), true) // little endian
+      writeBigUint64(state.buffer, i, m)
     }
     state.start += 8 * len
   },
   decode(state) {
     const len = uint.decode(state)
     if (state.end - state.start < 8 * len) throw new Error('Out of bounds')
-    const view = viewOf(state.buffer)
     let n = 0n
     for (let i = len - 1; i >= 0; i--) {
-      n = (n << 64n) + view.getBigUint64(state.start + i * 8, true) // little endian
+      n = (n << 64n) + readBigUint64(state.buffer, state.start + i * 8)
     }
     state.start += 8 * len
     return n
   }
 })
 
-exports.bigint = zigZagBigInt(biguint)
+exports.bigint = {
+  preencode(state, n) {
+    biguint.preencode(state, zigZagEncodeBigInt(n))
+  },
+  encode(state, n) {
+    biguint.encode(state, zigZagEncodeBigInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeBigInt(biguint.decode(state))
+  }
+}
 
 exports.lexint = require('./lexint')
 
@@ -294,14 +553,27 @@ exports.float32 = {
     state.end += 4
   },
   encode(state, n) {
-    viewOf(state.buffer).setFloat32(state.start, n, true) // little endian
-    state.start += 4
+    const buffer = state.buffer
+    const start = state.start
+    f32[0] = n
+    if (BE) f32Bytes.reverse()
+    buffer[start] = f32Bytes[0]
+    buffer[start + 1] = f32Bytes[1]
+    buffer[start + 2] = f32Bytes[2]
+    buffer[start + 3] = f32Bytes[3]
+    state.start = start + 4
   },
   decode(state) {
-    if (state.end - state.start < 4) throw new Error('Out of bounds')
-    const float = viewOf(state.buffer).getFloat32(state.start, true) // little endian
-    state.start += 4
-    return float
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 4) throw new Error('Out of bounds')
+    f32Bytes[0] = buffer[start]
+    f32Bytes[1] = buffer[start + 1]
+    f32Bytes[2] = buffer[start + 2]
+    f32Bytes[3] = buffer[start + 3]
+    if (BE) f32Bytes.reverse()
+    state.start = start + 4
+    return f32[0]
   }
 }
 
@@ -310,14 +582,35 @@ exports.float64 = {
     state.end += 8
   },
   encode(state, n) {
-    viewOf(state.buffer).setFloat64(state.start, n, true) // little endian
-    state.start += 8
+    const buffer = state.buffer
+    const start = state.start
+    f64[0] = n
+    if (BE) f64Bytes.reverse()
+    buffer[start] = f64Bytes[0]
+    buffer[start + 1] = f64Bytes[1]
+    buffer[start + 2] = f64Bytes[2]
+    buffer[start + 3] = f64Bytes[3]
+    buffer[start + 4] = f64Bytes[4]
+    buffer[start + 5] = f64Bytes[5]
+    buffer[start + 6] = f64Bytes[6]
+    buffer[start + 7] = f64Bytes[7]
+    state.start = start + 8
   },
   decode(state) {
-    if (state.end - state.start < 8) throw new Error('Out of bounds')
-    const float = viewOf(state.buffer).getFloat64(state.start, true) // little endian
-    state.start += 8
-    return float
+    const buffer = state.buffer
+    const start = state.start
+    if (state.end - start < 8) throw new Error('Out of bounds')
+    f64Bytes[0] = buffer[start]
+    f64Bytes[1] = buffer[start + 1]
+    f64Bytes[2] = buffer[start + 2]
+    f64Bytes[3] = buffer[start + 3]
+    f64Bytes[4] = buffer[start + 4]
+    f64Bytes[5] = buffer[start + 5]
+    f64Bytes[6] = buffer[start + 6]
+    f64Bytes[7] = buffer[start + 7]
+    if (BE) f64Bytes.reverse()
+    state.start = start + 8
+    return f64[0]
   }
 }
 
@@ -372,21 +665,15 @@ exports.arraybuffer = {
   encode(state, b) {
     uint.encode(state, b.byteLength)
 
-    const view = new Uint8Array(b)
-
-    state.buffer.set(view, state.start)
+    state.buffer.set(new Uint8Array(b), state.start)
     state.start += b.byteLength
   },
   decode(state) {
     const len = uint.decode(state)
-    if (state.end - state.start < len) throw new Error('Out of bounds')
-
-    const b = new ArrayBuffer(len)
-    const view = new Uint8Array(b)
-
-    view.set(state.buffer.subarray(state.start, (state.start += len)))
-
-    return b
+    const start = state.start
+    if (state.end - start < len) throw new Error('Out of bounds')
+    state.start = start + len
+    return new Uint8Array(state.buffer.subarray(start, start + len)).buffer
   }
 }
 
@@ -430,7 +717,8 @@ function typedarray(TypedArray, swap) {
     encode(state, b) {
       uint.encode(state, b.length)
 
-      const view = new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
+      const view =
+        b instanceof Uint8Array ? b : new Uint8Array(b.buffer, b.byteOffset, b.byteLength)
 
       if (BE && swap) swap(view)
 
@@ -439,14 +727,22 @@ function typedarray(TypedArray, swap) {
     },
     decode(state) {
       const len = uint.decode(state)
+      const byteLength = len * n
+      const start = state.start
+      if (state.end - start < byteLength) throw new Error('Out of bounds')
+      state.start = start + byteLength
 
-      let b = state.buffer.subarray(state.start, (state.start += len * n))
-      if (b.byteLength !== len * n) throw new Error('Out of bounds')
-      if (b.byteOffset % n !== 0) b = new Uint8Array(b)
+      let buffer = state.buffer.buffer
+      let byteOffset = state.buffer.byteOffset + start
 
-      if (BE && swap) swap(b)
+      if (byteOffset % n !== 0) {
+        buffer = new Uint8Array(state.buffer.subarray(start, start + byteLength)).buffer
+        byteOffset = 0
+      }
 
-      return new TypedArray(b.buffer, b.byteOffset, b.byteLength / n)
+      if (BE && swap) swap(new Uint8Array(buffer, byteOffset, byteLength))
+
+      return new TypedArray(buffer, byteOffset, len)
     }
   }
 }
@@ -1038,11 +1334,11 @@ function getType(o) {
   if (o === null || o === undefined) return 0
   if (typeof o === 'boolean') return 1
   if (typeof o === 'string') return 2
-  if (b4a.isBuffer(o)) return 3
   if (typeof o === 'number') {
     if (Number.isInteger(o)) return o >= 0 ? 4 : 5
     return 6
   }
+  if (b4a.isBuffer(o)) return 3
   if (Array.isArray(o)) return 7
   if (o instanceof Date) return 9
   if (typeof o === 'object') return 8
@@ -1132,20 +1428,6 @@ exports.decode = function decode(enc, buffer) {
   return enc.decode(exports.state(0, buffer.byteLength, buffer))
 }
 
-function zigZagInt(enc) {
-  return {
-    preencode(state, n) {
-      enc.preencode(state, zigZagEncodeInt(n))
-    },
-    encode(state, n) {
-      enc.encode(state, zigZagEncodeInt(n))
-    },
-    decode(state) {
-      return zigZagDecodeInt(enc.decode(state))
-    }
-  }
-}
-
 function zigZagDecodeInt(n) {
   return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
 }
@@ -1156,27 +1438,13 @@ function zigZagEncodeInt(n) {
   return n < 0 ? 2 * -n - 1 : n === 0 ? 0 : 2 * n
 }
 
-function zigZagBigInt(enc) {
-  return {
-    preencode(state, n) {
-      enc.preencode(state, zigZagEncodeBigInt(n))
-    },
-    encode(state, n) {
-      enc.encode(state, zigZagEncodeBigInt(n))
-    },
-    decode(state) {
-      return zigZagDecodeBigInt(enc.decode(state))
-    }
-  }
-}
-
 function zigZagDecodeBigInt(n) {
-  return n === 0n ? n : (n & 1n) === 0n ? n / 2n : -(n + 1n) / 2n
+  return (n & 1n) === 0n ? n >> 1n : ~(n >> 1n)
 }
 
 function zigZagEncodeBigInt(n) {
   // 0, -1, 1, -2, 2, ...
-  return n < 0n ? 2n * -n - 1n : n === 0n ? 0n : 2n * n
+  return n < 0n ? ~(n << 1n) : n << 1n
 }
 
 function validateSafeUint(n) {

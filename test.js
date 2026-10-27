@@ -526,6 +526,28 @@ test('arraybuffer - throws when length exceeds buffer', function (t) {
   t.exception(() => enc.arraybuffer.decode(state), /Out of bounds/)
 })
 
+test('arraybuffer and typed arrays stop at state end', function (t) {
+  const buffer = b4a.from([2, 1, 0, 2, 0])
+
+  t.exception(() => enc.arraybuffer.decode(enc.state(0, 2, buffer)), /Out of bounds/)
+  t.exception(() => enc.uint8array.decode(enc.state(0, 2, buffer)), /Out of bounds/)
+  t.exception(() => enc.uint16array.decode(enc.state(0, 4, buffer)), /Out of bounds/)
+})
+
+test('typed arrays decode from unaligned offsets', function (t) {
+  const encoded = enc.encode(enc.uint32array, new Uint32Array([1, 0xffffffff]))
+
+  for (let offset = 0; offset < 4; offset++) {
+    const buffer = b4a.alloc(encoded.byteLength + offset)
+    buffer.set(encoded, offset)
+
+    const state = enc.state(offset, buffer.byteLength, buffer)
+
+    t.alike(enc.uint32array.decode(state), new Uint32Array([1, 0xffffffff]))
+    t.is(state.start, state.end)
+  }
+})
+
 test('raw', function (t) {
   const state = enc.state()
 
