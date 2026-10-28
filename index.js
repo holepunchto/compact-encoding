@@ -483,6 +483,7 @@ const biguint64 = (exports.biguint64 = {
     state.end += 8
   },
   encode(state, n) {
+    validateBigWidth(n, 0xffffffffffffffffn)
     writeBigUint64(state.buffer, state.start, n)
     state.start += 8
   },
@@ -1515,6 +1516,12 @@ function validateWidth(n, max) {
   if (!Number.isInteger(n)) throw uintNotInteger()
   if (!(n >= 0 && n <= max)) throw outsideWidth(max)
   return n
+}
+
+function validateBigWidth(n, max) {
+  if (n >= 0n && n <= max) return n
+
+  throw outsideWidth(max)
 }
 
 // The validations above sit on the hottest paths in the library and are small
