@@ -4,6 +4,7 @@
   "description": "A series of compact encoding schemes for building small and fast parsers and serializers",
   "exports": {
     "./package": "./package.json",
+    "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
       "default": "./index.js"
