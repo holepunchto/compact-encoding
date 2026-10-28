@@ -99,7 +99,8 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.bigint` - Encodes a bigint using `cenc.biguint` with ZigZag encoding.
 - `cenc.float32` - Encodes a fixed size float32.
 - `cenc.float64` - Encodes a fixed size float64.
-- `cenc.buffer` - Encodes a buffer with its length uint prefixed. When decoding an empty buffer, `null` is returned.
+- `cenc.buffer` - Encodes a buffer with its length uint prefixed.
+- `cenc.optionalBuffer` - Like `cenc.buffer`, but also accepts `null`. An empty buffer and `null` both encode as length 0, which decodes as `null`.
 - `cenc.raw.buffer` - Encodes a buffer without a length prefixed.
 - `cenc.arraybuffer` - Encodes an arraybuffer with its length uint prefixed.
 - `cenc.raw.arraybuffer` - Encodes an arraybuffer without a length prefixed.
