@@ -159,6 +159,13 @@ export function record<I, O = I>(
 
 export const stringRecord: Encoder<Record<string, string>>
 
+export function orderedRecord<I, O = I>(
+  keyEncoding: Encoder<string>,
+  valueEncoder: Encoder<I, O>
+): Encoder<Record<string, I>, Record<string, O>>
+
+export const orderedStringRecord: Encoder<Record<string, string>>
+
 interface CodecLike<Input, Output = Input> {
   encode(value: Input): Uint8Array
   decode(buffer: Uint8Array): Output

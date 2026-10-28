@@ -1424,6 +1424,54 @@ test('stringRecord', function (t) {
   )
 })
 
+test('orderedRecord', function (t) {
+  const encoding = enc.orderedRecord(enc.string, enc.string)
+
+  t.alike(
+    enc.encode(encoding, { b: 'world', a: 'hello' }),
+    enc.encode(encoding, { a: 'hello', b: 'world' }),
+    'the order the keys were set in does not reach the bytes'
+  )
+
+  t.alike(
+    enc.decode(encoding, enc.encode(encoding, { b: 'world', a: 'hello' })),
+    Object.assign(Object.create(null), {
+      a: 'hello',
+      b: 'world'
+    })
+  )
+})
+
+test('orderedRecord - keys sort by the bytes they encode to', function (t) {
+  const encoding = enc.orderedRecord(enc.string, enc.uint)
+  const astral = '\u{10000}'
+  const replacement = '\uFFFD'
+
+  t.alike(
+    enc.encode(encoding, { [astral]: 1, [replacement]: 2 }),
+    b4a.from('0203efbfbd0204f090808001', 'hex'),
+    'the replacement character sorts first, as its utf8 bytes do'
+  )
+
+  t.alike(
+    enc.encode(encoding, { ab: 1, b: 2 }),
+    b4a.from('0202616201016202', 'hex'),
+    'a shorter key does not sort first for being shorter'
+  )
+})
+
+test('orderedRecord - an unpaired surrogate sorts as the bytes replacing it', function (t) {
+  const encoding = enc.orderedRecord(enc.string, enc.uint)
+  const unpaired = '\uD800'
+  const private_ = '\uE000'
+
+  t.alike(
+    enc.encode(encoding, { [unpaired]: 1, [private_]: 2 }),
+    b4a.from('0203ee80800203efbfbd01', 'hex'),
+    'the unpaired surrogate is written as U+FFFD, so it sorts after U+E000'
+  )
+})
+
 test('bitarray', function (t) {
   t.alike(
     enc.decode(enc.bitarray, enc.encode(enc.bitarray, [false, true])),

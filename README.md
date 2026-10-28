@@ -150,6 +150,10 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.date(d)` - Encodes a date object.
 - `cenc.array(enc)` - Makes an array encoder from another encoder. Arrays are uint prefixed with their length.
 - `cenc.raw.array(enc)` - Makes an array encoder from another encoder, without a length prefixed.
+- `cenc.record(keyEnc, valueEnc)` - Makes a record encoder from a key and a value encoder. Keys are always strings, so `keyEnc` has to be a string encoding. Records are uint prefixed with their number of pairs. The order the pairs are written in is undefined, so two encoders may order the same record differently.
+- `cenc.stringRecord` - Encodes a record of strings to strings.
+- `cenc.orderedRecord(keyEnc, valueEnc)` - Same as `cenc.record`, but the keys are sorted before being written, so a record encodes to the same bytes whatever order its keys were set in. Keys sort by their own utf-8 bytes rather than by what `keyEnc` writes, which is the comparison every language can reproduce. Keys that encode to the same bytes, two different unpaired surrogates say, keep the order they were set in.
+- `cenc.orderedStringRecord` - Encodes a record of strings to strings, with the keys sorted.
 - `cenc.json` - Encodes a JSON value as utf-8.
 - `cenc.raw.json` - Encodes a JSON value as utf-8 without a length prefixed.
 - `cenc.ndjson` - Encodes a JSON value as newline delimited utf-8.

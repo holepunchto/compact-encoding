@@ -1328,7 +1328,47 @@ const record = (exports.record = function (keyEncoding, valueEncoding) {
   }
 })
 
+const orderedRecord = (exports.orderedRecord = function (keyEncoding, valueEncoding) {
+  return {
+    preencode(state, v) {
+      const keys = sortedKeys(v)
+      uint.preencode(state, keys.length)
+      for (const k of keys) {
+        keyEncoding.preencode(state, k)
+        valueEncoding.preencode(state, v[k])
+      }
+    },
+    encode(state, v) {
+      const keys = sortedKeys(v)
+      uint.encode(state, keys.length)
+      for (const k of keys) {
+        keyEncoding.encode(state, k)
+        valueEncoding.encode(state, v[k])
+      }
+    },
+    decode(state) {
+      const out = Object.create(null)
+      const keys = uint.decode(state)
+      for (let i = 0; i < keys; i++) {
+        out[keyEncoding.decode(state)] = valueEncoding.decode(state)
+      }
+      return out
+    }
+  }
+})
+
 exports.stringRecord = record(utf8, utf8)
+
+exports.orderedStringRecord = orderedRecord(utf8, utf8)
+
+// Keys order by their own UTF-8 bytes, not by the bytes the key encoding frames
+// them in.
+function sortedKeys(v) {
+  const keys = Object.keys(v)
+  const bytes = new Map(keys.map((k) => [k, b4a.from(k, 'utf8')]))
+
+  return keys.sort((a, b) => b4a.compare(bytes.get(a), bytes.get(b)))
+}
 
 function getType(o) {
   if (o === null || o === undefined) return 0
