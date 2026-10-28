@@ -1225,6 +1225,24 @@ test('lexint: throws', function (t) {
   t.end()
 })
 
+test('lexint: refuses a value outside its range', function (t) {
+  t.is(enc.decode(enc.lexint, enc.encode(enc.lexint, 0)), 0)
+  t.ok(enc.decode(enc.lexint, enc.encode(enc.lexint, Number.MAX_VALUE)) > 0)
+
+  for (const n of [-1, -0.5, -1e10, -Infinity, Infinity, NaN]) {
+    t.exception.all(
+      () => enc.encode(enc.lexint, n),
+      { name: 'RangeError', message: /lexint/ },
+      String(n)
+    )
+    t.exception.all(
+      () => enc.lexint.encode(enc.state(0, 16, b4a.alloc(16)), n),
+      { name: 'RangeError', message: /lexint/ },
+      String(n)
+    )
+  }
+})
+
 test('lexint: unpack', function (t) {
   let n
   let skip = 1

@@ -5,6 +5,8 @@ module.exports = {
 }
 
 function preencode(state, num) {
+  validateLexint(num)
+
   if (num < 251) {
     state.end++
   } else if (num < 256) {
@@ -24,6 +26,8 @@ function preencode(state, num) {
 }
 
 function encode(state, num) {
+  validateLexint(num)
+
   const max = 251
   const x = num - max
 
@@ -112,4 +116,14 @@ function decode(state) {
   }
 
   return rem * Math.pow(2, exp - 11) + max
+}
+
+function validateLexint(num) {
+  if (num >= 0 && num <= Number.MAX_VALUE) return num // Handles NaN as well
+
+  throw outsideLexintRange()
+}
+
+function outsideLexintRange() {
+  return new RangeError(`lexint must be between 0 and ${Number.MAX_VALUE}`)
 }
