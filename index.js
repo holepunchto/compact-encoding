@@ -107,7 +107,7 @@ const uint8 = (exports.uint8 = {
     state.end += 1
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xff)
     state.buffer[state.start++] = n
   },
   decode(state) {
@@ -121,7 +121,7 @@ const uint16 = (exports.uint16 = {
     state.end += 2
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffff)
     write16(state.buffer, state.start, n)
     state.start += 2
   },
@@ -138,7 +138,7 @@ const uint24 = (exports.uint24 = {
     state.end += 3
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffffff)
     write24(state.buffer, state.start, n)
     state.start += 3
   },
@@ -155,7 +155,7 @@ const uint32 = (exports.uint32 = {
     state.end += 4
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffffffff)
     write32(state.buffer, state.start, n)
     state.start += 4
   },
@@ -172,7 +172,7 @@ exports.uint32be = {
     state.end += 4
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffffffff)
     write32be(state.buffer, state.start, n)
     state.start += 4
   },
@@ -189,7 +189,7 @@ const uint40 = (exports.uint40 = {
     state.end += 5
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffffffffff)
     const buffer = state.buffer
     const start = state.start
     buffer[start] = n
@@ -210,7 +210,7 @@ const uint48 = (exports.uint48 = {
     state.end += 6
   },
   encode(state, n) {
-    validateUint(n)
+    validateWidth(n, 0xffffffffffff)
     const buffer = state.buffer
     const start = state.start
     write16(buffer, start, n)
@@ -1511,6 +1511,12 @@ function validateBigUint(n) {
   throw negativeBigUint()
 }
 
+function validateWidth(n, max) {
+  if (!Number.isInteger(n)) throw uintNotInteger()
+  if (!(n >= 0 && n <= max)) throw outsideWidth(max)
+  return n
+}
+
 // The validations above sit on the hottest paths in the library and are small
 // enough to be inlined, which building a message inline would put a stop to.
 // Kept out here, the message costs nothing until it is actually thrown.
@@ -1533,4 +1539,8 @@ function uintNotInteger() {
 
 function intNotInteger() {
   return new TypeError('int must be an integer')
+}
+
+function outsideWidth(max) {
+  return new RangeError(`value must be between 0 and ${max}`)
 }
