@@ -19,12 +19,14 @@
   },
   "devDependencies": {
     "brittle": "^4.0.0",
+    "lunte": "^1.8.6",
     "prettier": "^3.6.2",
     "prettier-config-holepunch": "^2.0.0"
   },
   "scripts": {
-    "format": "prettier . --write",
-    "test": "prettier . --check && brittle-node test.js"
+    "format": "prettier --write . && lunte --fix",
+    "lint": "prettier --check . && lunte",
+    "test": "brittle-node test.js"
   },
   "repository": {
     "type": "git",
