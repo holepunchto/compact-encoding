@@ -21,11 +21,12 @@ const uint = (exports.uint = {
     state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
   },
   encode(state, n) {
+    validateUint(n)
+
     const buffer = state.buffer
     const start = state.start
 
     if (n <= 0xfc) {
-      validateUint(n)
       buffer[start] = n
       state.start = start + 1
     } else if (n <= 0xffff) {
@@ -41,7 +42,6 @@ const uint = (exports.uint = {
       buffer[start + 4] = n >>> 24
       state.start = start + 5
     } else {
-      validateUint(n)
       const r = Math.floor(n / 0x100000000)
       buffer[start] = 0xff
       buffer[start + 1] = n
@@ -1494,15 +1494,15 @@ function validateSafeUint(n) {
 }
 
 function validateUint(n) {
-  if (n >= 0 && n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
-
-  throw outsideUintRange()
+  if (!Number.isInteger(n)) throw uintNotInteger()
+  if (!(n >= 0 && n <= Number.MAX_SAFE_INTEGER)) throw outsideUintRange()
+  return n
 }
 
 function validateInt(n) {
-  if (n >= MIN_SAFE_INT && n <= MAX_SAFE_INT) return n // Handles NaN as well
-
-  throw outsideIntRange()
+  if (!Number.isInteger(n)) throw intNotInteger()
+  if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange()
+  return n
 }
 
 function validateBigUint(n) {
@@ -1525,4 +1525,12 @@ function outsideIntRange() {
 
 function negativeBigUint() {
   return new RangeError('biguint must not be negative')
+}
+
+function uintNotInteger() {
+  return new TypeError('uint must be an integer')
+}
+
+function intNotInteger() {
+  return new TypeError('int must be an integer')
 }

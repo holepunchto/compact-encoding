@@ -266,21 +266,83 @@ test('int rejects values outside the range it can carry', function (t) {
     message: /use bigint/
   })
 
-  // Values with no integer to write are turned away by the same check.
-  t.exception.all(() => enc.int.encode(state, Infinity), {
-    name: 'RangeError',
-    message: /use bigint/
-  })
-  t.exception.all(() => enc.int.encode(state, -Infinity), {
-    name: 'RangeError',
-    message: /use bigint/
-  })
-  t.exception.all(() => enc.int.encode(state, NaN), { name: 'RangeError', message: /use bigint/ })
-
   // The rejection lands before any space is reserved for the value.
   const empty = enc.state()
   t.exception.all(() => enc.int.preencode(empty, MAX_SAFE_INT + 1), { name: 'RangeError' })
   t.is(empty.end, 0)
+})
+
+test('non-integers are refused', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception.all(() => enc.uint.encode(state, 1.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, 252.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, 65535.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, 4294967295.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, -1.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, NaN), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+  t.exception.all(() => enc.uint.encode(state, Infinity), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+
+  t.exception.all(() => enc.uint32.encode(state, 1.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+
+  t.exception.all(() => enc.int.encode(state, 1.5), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.exception.all(() => enc.int.encode(state, 0.5), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.exception.all(() => enc.int.encode(state, -1.5), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.exception.all(() => enc.int.encode(state, NaN), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.exception.all(() => enc.int.encode(state, Infinity), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.exception.all(() => enc.int.encode(state, -Infinity), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+
+  const empty = enc.state()
+  t.exception.all(() => enc.int.preencode(empty, 1.5), {
+    name: 'TypeError',
+    message: /int must be an integer/
+  })
+  t.is(empty.end, 0)
+
+  t.is(enc.decode(enc.uint, enc.encode(enc.uint, -0)), 0)
+  t.is(enc.decode(enc.int, enc.encode(enc.int, -0)), 0)
 })
 
 test('float64', function (t) {
