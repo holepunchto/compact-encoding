@@ -1510,9 +1510,9 @@ function validateInt(n) {
 // Kept out here, the message costs nothing until it is actually thrown.
 
 function outsideUintRange() {
-  return new Error(`uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`)
+  return new RangeError(`uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`)
 }
 
 function outsideIntRange() {
-  return new Error(`int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`)
+  return new RangeError(`int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`)
 }
