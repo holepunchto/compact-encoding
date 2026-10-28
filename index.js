@@ -1512,9 +1512,9 @@ function validateBigUint(n) {
 }
 
 function validateWidth(n, max) {
-  if (n >= 0 && n <= max) return n // Handles NaN as well
-
-  throw outsideWidth(max)
+  if (!Number.isInteger(n)) throw uintNotInteger()
+  if (!(n >= 0 && n <= max)) throw outsideWidth(max)
+  return n
 }
 
 // The validations above sit on the hottest paths in the library and are small

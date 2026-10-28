@@ -241,12 +241,12 @@ test('a fixed-width int refuses a value its width cannot hold', function (t) {
 
 test('a wide fixed-width codec is bounded by its own width alone', function (t) {
   const values = {
-    uint40: 255.5,
-    uint48: 65535.5,
-    uint56: 16777215.5,
-    uint64: 4294967295.5,
-    uint64be: 4294967295.5,
-    uint: 4294967295.5
+    uint40: 256,
+    uint48: 65536,
+    uint56: 16777216,
+    uint64: 4294967296,
+    uint64be: 4294967296,
+    uint: 4294967296
   }
 
   for (const [name, n] of Object.entries(values)) {
@@ -367,6 +367,16 @@ test('non-integers are refused', function (t) {
   })
 
   t.exception.all(() => enc.uint32.encode(state, 1.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+
+  t.exception.all(() => enc.uint8.encode(state, 1.5), {
+    name: 'TypeError',
+    message: /uint must be an integer/
+  })
+
+  t.exception.all(() => enc.uint48.encode(state, 1.5), {
     name: 'TypeError',
     message: /uint must be an integer/
   })
