@@ -442,6 +442,14 @@ test('biguint', function (t) {
   t.exception(() => enc.biguint.decode(state))
 })
 
+test('biguint refuses a negative value', function (t) {
+  t.exception.all(() => enc.encode(enc.biguint, -1n), { name: 'RangeError' })
+  t.exception.all(() => enc.biguint.preencode(enc.state(), -1n), { name: 'RangeError' })
+  t.exception.all(() => enc.biguint.encode(enc.state(0, 64, b4a.alloc(64)), -1n), {
+    name: 'RangeError'
+  })
+})
+
 test('bigint', function (t) {
   const state = enc.state()
 
