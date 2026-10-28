@@ -49,6 +49,8 @@ You can also get a blank state object using `cenc.state()`.
 Does a fast preencode dry-run that only sets state.end.
 Use this to figure out how big of a buffer you need.
 
+`preencode` is not guaranteed to reject an invalid `val`. `encode` is where a value is checked.
+
 #### `enc.encode(state, val)`
 
 Encodes `val` into `state.buffer` at position `state.start`.
