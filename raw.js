@@ -25,7 +25,7 @@ const buffer = (exports.buffer = {
     uint8array.encode(state, b)
   },
   decode(state) {
-    const b = state.buffer.subarray(state.start)
+    const b = state.buffer.subarray(state.start, state.end)
     state.start = state.end
     return b
   }
@@ -57,7 +57,7 @@ exports.arraybuffer = {
     const b = new ArrayBuffer(state.end - state.start)
     const view = new Uint8Array(b)
 
-    view.set(state.buffer.subarray(state.start))
+    view.set(state.buffer.subarray(state.start, state.end))
 
     state.start = state.end
 
@@ -81,7 +81,7 @@ function typedarray(TypedArray, swap) {
       state.start += b.byteLength
     },
     decode(state) {
-      let b = state.buffer.subarray(state.start)
+      let b = state.buffer.subarray(state.start, state.end)
       if (b.byteOffset % n !== 0) b = new Uint8Array(b)
 
       if (BE && swap) swap(b)
@@ -116,7 +116,7 @@ function string(encoding) {
       state.start += b4a.write(state.buffer, s, state.start, encoding)
     },
     decode(state) {
-      const s = b4a.toString(state.buffer, encoding, state.start)
+      const s = b4a.toString(state.buffer, encoding, state.start, state.end)
       state.start = state.end
       return s
     }

@@ -780,6 +780,86 @@ test('raw uint8array', function (t) {
   t.alike(enc.raw.uint8array.decode(state), Uint8Array.of())
 })
 
+const rawWindowCases = [
+  ['bytes', enc.raw, () => b4a.from([1, 2, 3])],
+  ['buffer', enc.raw.buffer, () => b4a.from([1, 2, 3])],
+  ['binary', enc.raw.binary, () => b4a.from([1, 2, 3])],
+  ['arraybuffer', enc.raw.arraybuffer, () => Uint8Array.of(1, 2, 3).buffer],
+  ['uint8array', enc.raw.uint8array, () => Uint8Array.of(1, 255)],
+  ['uint16array', enc.raw.uint16array, () => Uint16Array.of(1, 65535)],
+  ['uint32array', enc.raw.uint32array, () => Uint32Array.of(1, 0xffffffff)],
+  ['int8array', enc.raw.int8array, () => Int8Array.of(-128, 127)],
+  ['int16array', enc.raw.int16array, () => Int16Array.of(-32768, 32767)],
+  ['int32array', enc.raw.int32array, () => Int32Array.of(-2147483648, 2147483647)],
+  ['biguint64array', enc.raw.biguint64array, () => BigUint64Array.of(1n, 2n ** 63n)],
+  ['bigint64array', enc.raw.bigint64array, () => BigInt64Array.of(-1n, 2n ** 62n)],
+  ['float32array', enc.raw.float32array, () => Float32Array.of(3.25, -7.5)],
+  ['float64array', enc.raw.float64array, () => Float64Array.of(3.25, -7.5)],
+  ['string', enc.raw.string, () => 'hello ☃'],
+  ['utf8', enc.raw.utf8, () => 'hello ☃'],
+  ['ascii', enc.raw.ascii, () => 'hello'],
+  ['hex', enc.raw.hex, () => '0102ff'],
+  ['base64', enc.raw.base64, () => 'AQL/'],
+  ['utf16le', enc.raw.utf16le, () => 'hello ☃'],
+  ['ucs2', enc.raw.ucs2, () => 'hello ☃'],
+  ['json', enc.raw.json, () => ({ message: 'hello', values: [1, true] })],
+  ['ndjson', enc.raw.ndjson, () => ({ message: 'hello', values: [1, true] })],
+  ['array', enc.raw.array(enc.uint), () => [1, 2, 3]],
+  ['from string', enc.from('utf8'), () => 'hello ☃'],
+  ['from json', enc.from('json'), () => ({ message: 'hello' })],
+  ['from binary', enc.from('binary'), () => b4a.from([1, 2, 3])],
+  ['empty buffer', enc.raw.buffer, () => b4a.alloc(0)],
+  ['empty arraybuffer', enc.raw.arraybuffer, () => new ArrayBuffer(0)],
+  ['empty typed array', enc.raw.uint32array, () => new Uint32Array(0)],
+  ['empty string', enc.raw.string, () => '']
+]
+
+for (const [name, codec, createValue] of rawWindowCases) {
+  test('raw ' + name + ' respects direct and framed decode windows', async function (t) {
+    const trailer = b4a.from('tailTAIL')
+
+    for (const [depth, decoder] of [
+      codec,
+      enc.frame(codec),
+      enc.frame(enc.frame(codec))
+    ].entries()) {
+      const encoded = enc.encode(decoder, createValue())
+
+      for (const offset of [0, 1, 2, 7]) {
+        for (const BufferType of [Uint8Array, b4a]) {
+          const storage =
+            BufferType === b4a
+              ? b4a.alloc(3 + offset + encoded.byteLength + trailer.byteLength)
+              : new Uint8Array(3 + offset + encoded.byteLength + trailer.byteLength)
+          const buffer = storage.subarray(3)
+          buffer.set(encoded, offset)
+          buffer.set(trailer, offset + encoded.byteLength)
+
+          const end = depth === 0 ? offset + encoded.byteLength : buffer.byteLength
+          const state = enc.state(offset, end, buffer)
+
+          let decoded
+          await t.execution(() => {
+            decoded = decoder.decode(state)
+          })
+          const expected = createValue()
+          if (b4a.isBuffer(expected)) {
+            t.alike(new Uint8Array(decoded), new Uint8Array(expected))
+          } else {
+            t.alike(decoded, expected)
+          }
+          t.is(state.start, offset + encoded.byteLength)
+          t.is(state.end, end)
+
+          state.end = buffer.byteLength
+          t.alike(new Uint8Array(enc.raw.decode(state)), new Uint8Array(trailer))
+          t.is(state.start, state.end)
+        }
+      }
+    }
+  })
+}
+
 test('uint16array', function (t) {
   const state = enc.state()
 
