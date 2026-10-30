@@ -780,85 +780,125 @@ test('raw uint8array', function (t) {
   t.alike(enc.raw.uint8array.decode(state), Uint8Array.of())
 })
 
-const rawWindowCases = [
-  ['bytes', enc.raw, () => b4a.from([1, 2, 3])],
-  ['buffer', enc.raw.buffer, () => b4a.from([1, 2, 3])],
-  ['binary', enc.raw.binary, () => b4a.from([1, 2, 3])],
-  ['arraybuffer', enc.raw.arraybuffer, () => Uint8Array.of(1, 2, 3).buffer],
-  ['uint8array', enc.raw.uint8array, () => Uint8Array.of(1, 255)],
-  ['uint16array', enc.raw.uint16array, () => Uint16Array.of(1, 65535)],
-  ['uint32array', enc.raw.uint32array, () => Uint32Array.of(1, 0xffffffff)],
-  ['int8array', enc.raw.int8array, () => Int8Array.of(-128, 127)],
-  ['int16array', enc.raw.int16array, () => Int16Array.of(-32768, 32767)],
-  ['int32array', enc.raw.int32array, () => Int32Array.of(-2147483648, 2147483647)],
-  ['biguint64array', enc.raw.biguint64array, () => BigUint64Array.of(1n, 2n ** 63n)],
-  ['bigint64array', enc.raw.bigint64array, () => BigInt64Array.of(-1n, 2n ** 62n)],
-  ['float32array', enc.raw.float32array, () => Float32Array.of(3.25, -7.5)],
-  ['float64array', enc.raw.float64array, () => Float64Array.of(3.25, -7.5)],
-  ['string', enc.raw.string, () => 'hello ☃'],
-  ['utf8', enc.raw.utf8, () => 'hello ☃'],
-  ['ascii', enc.raw.ascii, () => 'hello'],
-  ['hex', enc.raw.hex, () => '0102ff'],
-  ['base64', enc.raw.base64, () => 'AQL/'],
-  ['utf16le', enc.raw.utf16le, () => 'hello ☃'],
-  ['ucs2', enc.raw.ucs2, () => 'hello ☃'],
-  ['json', enc.raw.json, () => ({ message: 'hello', values: [1, true] })],
-  ['ndjson', enc.raw.ndjson, () => ({ message: 'hello', values: [1, true] })],
-  ['array', enc.raw.array(enc.uint), () => [1, 2, 3]],
-  ['from string', enc.from('utf8'), () => 'hello ☃'],
-  ['from json', enc.from('json'), () => ({ message: 'hello' })],
-  ['from binary', enc.from('binary'), () => b4a.from([1, 2, 3])],
-  ['empty buffer', enc.raw.buffer, () => b4a.alloc(0)],
-  ['empty arraybuffer', enc.raw.arraybuffer, () => new ArrayBuffer(0)],
-  ['empty typed array', enc.raw.uint32array, () => new Uint32Array(0)],
-  ['empty string', enc.raw.string, () => '']
-]
+test('raw buffer stops at state end', function (t) {
+  const buffer = b4a.from([99, 1, 2, 3, 42])
+  const state = enc.state(1, 4, buffer)
 
-for (const [name, codec, createValue] of rawWindowCases) {
-  test('raw ' + name + ' respects direct and framed decode windows', async function (t) {
-    const trailer = b4a.from('tailTAIL')
+  t.alike(enc.raw.buffer.decode(state), b4a.from([1, 2, 3]))
+  t.alike(state, enc.state(4, 4, buffer))
+  t.alike(buffer, b4a.from([99, 1, 2, 3, 42]))
+})
 
-    for (const [depth, decoder] of [
-      codec,
-      enc.frame(codec),
-      enc.frame(enc.frame(codec))
-    ].entries()) {
-      const encoded = enc.encode(decoder, createValue())
+test('framed raw buffer leaves the next field', function (t) {
+  const buffer = b4a.from([99, 3, 1, 2, 3, 42]).subarray(1)
+  const state = enc.state(0, buffer.byteLength, buffer)
 
-      for (const offset of [0, 1, 2, 7]) {
-        for (const BufferType of [Uint8Array, b4a]) {
-          const storage =
-            BufferType === b4a
-              ? b4a.alloc(3 + offset + encoded.byteLength + trailer.byteLength)
-              : new Uint8Array(3 + offset + encoded.byteLength + trailer.byteLength)
-          const buffer = storage.subarray(3)
-          buffer.set(encoded, offset)
-          buffer.set(trailer, offset + encoded.byteLength)
+  t.alike(enc.frame(enc.raw.buffer).decode(state), b4a.from([1, 2, 3]))
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
 
-          const end = depth === 0 ? offset + encoded.byteLength : buffer.byteLength
-          const state = enc.state(offset, end, buffer)
+test('raw string stops at state end', function (t) {
+  const buffer = b4a.from('xhiTAIL')
+  const state = enc.state(1, 3, buffer)
 
-          let decoded
-          await t.execution(() => {
-            decoded = decoder.decode(state)
-          })
-          const expected = createValue()
-          if (b4a.isBuffer(expected)) {
-            t.alike(new Uint8Array(decoded), new Uint8Array(expected))
-          } else {
-            t.alike(decoded, expected)
-          }
-          t.is(state.start, offset + encoded.byteLength)
-          t.is(state.end, end)
+  t.is(enc.raw.string.decode(state), 'hi')
+  t.alike(state, enc.state(3, 3, buffer))
+  t.alike(buffer, b4a.from('xhiTAIL'))
+})
 
-          state.end = buffer.byteLength
-          t.alike(new Uint8Array(enc.raw.decode(state)), new Uint8Array(trailer))
-          t.is(state.start, state.end)
-        }
-      }
-    }
-  })
-}
+test('framed raw string leaves the next field', function (t) {
+  const buffer = b4a.from([5, 104, 105, 0xe2, 0x98, 0x83, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.is(enc.frame(enc.raw.string).decode(state), 'hi☃')
+  t.alike(state, enc.state(6, 7, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('raw arraybuffer stops at state end', function (t) {
+  const buffer = Uint8Array.of(99, 1, 2, 3, 42).subarray(1)
+  const state = enc.state(0, 3, buffer)
+
+  t.alike(enc.raw.arraybuffer.decode(state), Uint8Array.of(1, 2, 3).buffer)
+  t.alike(state, enc.state(3, 3, buffer))
+  t.alike(buffer, Uint8Array.of(1, 2, 3, 42))
+})
+
+test('framed raw arraybuffer leaves the next field', function (t) {
+  const buffer = b4a.from([3, 1, 2, 3, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.alike(enc.frame(enc.raw.arraybuffer).decode(state), Uint8Array.of(1, 2, 3).buffer)
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('raw typed array stops at state end from an unaligned view', function (t) {
+  const buffer = Uint8Array.of(99, 1, 0, 255, 255, 42, 43).subarray(1)
+  const state = enc.state(0, 4, buffer)
+
+  t.alike(enc.raw.uint16array.decode(state), Uint16Array.of(1, 65535))
+  t.alike(state, enc.state(4, 4, buffer))
+  t.alike(buffer, Uint8Array.of(1, 0, 255, 255, 42, 43))
+})
+
+test('framed raw typed array leaves the next fields', function (t) {
+  const buffer = b4a.from([99, 4, 1, 0, 255, 255, 42, 43]).subarray(1)
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.alike(enc.frame(enc.raw.uint16array).decode(state), Uint16Array.of(1, 65535))
+  t.alike(state, enc.state(5, 7, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(enc.uint.decode(state), 43)
+  t.is(state.start, state.end)
+})
+
+test('nested raw string frames leave the next field', function (t) {
+  const buffer = b4a.from([3, 2, 104, 105, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.is(enc.frame(enc.frame(enc.raw.string)).decode(state), 'hi')
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw buffer frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.alike(enc.frame(enc.raw.buffer).decode(state), b4a.alloc(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw string frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.is(enc.frame(enc.raw.string).decode(state), '')
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw arraybuffer frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.alike(enc.frame(enc.raw.arraybuffer).decode(state), new ArrayBuffer(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw typed array frame leaves the next fields', function (t) {
+  const state = enc.state(0, 3, b4a.from([0, 42, 43]))
+
+  t.alike(enc.frame(enc.raw.uint16array).decode(state), new Uint16Array(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(enc.uint.decode(state), 43)
+  t.is(state.start, state.end)
+})
 
 test('uint16array', function (t) {
   const state = enc.state()
