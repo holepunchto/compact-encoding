@@ -780,6 +780,126 @@ test('raw uint8array', function (t) {
   t.alike(enc.raw.uint8array.decode(state), Uint8Array.of())
 })
 
+test('raw buffer stops at state end', function (t) {
+  const buffer = b4a.from([99, 1, 2, 3, 42])
+  const state = enc.state(1, 4, buffer)
+
+  t.alike(enc.raw.buffer.decode(state), b4a.from([1, 2, 3]))
+  t.alike(state, enc.state(4, 4, buffer))
+  t.alike(buffer, b4a.from([99, 1, 2, 3, 42]))
+})
+
+test('framed raw buffer leaves the next field', function (t) {
+  const buffer = b4a.from([99, 3, 1, 2, 3, 42]).subarray(1)
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.alike(enc.frame(enc.raw.buffer).decode(state), b4a.from([1, 2, 3]))
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('raw string stops at state end', function (t) {
+  const buffer = b4a.from('xhiTAIL')
+  const state = enc.state(1, 3, buffer)
+
+  t.is(enc.raw.string.decode(state), 'hi')
+  t.alike(state, enc.state(3, 3, buffer))
+  t.alike(buffer, b4a.from('xhiTAIL'))
+})
+
+test('framed raw string leaves the next field', function (t) {
+  const buffer = b4a.from([5, 104, 105, 0xe2, 0x98, 0x83, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.is(enc.frame(enc.raw.string).decode(state), 'hi☃')
+  t.alike(state, enc.state(6, 7, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('raw arraybuffer stops at state end', function (t) {
+  const buffer = Uint8Array.of(99, 1, 2, 3, 42).subarray(1)
+  const state = enc.state(0, 3, buffer)
+
+  t.alike(enc.raw.arraybuffer.decode(state), Uint8Array.of(1, 2, 3).buffer)
+  t.alike(state, enc.state(3, 3, buffer))
+  t.alike(buffer, Uint8Array.of(1, 2, 3, 42))
+})
+
+test('framed raw arraybuffer leaves the next field', function (t) {
+  const buffer = b4a.from([3, 1, 2, 3, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.alike(enc.frame(enc.raw.arraybuffer).decode(state), Uint8Array.of(1, 2, 3).buffer)
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('raw typed array stops at state end from an unaligned view', function (t) {
+  const buffer = Uint8Array.of(99, 1, 0, 255, 255, 42, 43).subarray(1)
+  const state = enc.state(0, 4, buffer)
+
+  t.alike(enc.raw.uint16array.decode(state), Uint16Array.of(1, 65535))
+  t.alike(state, enc.state(4, 4, buffer))
+  t.alike(buffer, Uint8Array.of(1, 0, 255, 255, 42, 43))
+})
+
+test('framed raw typed array leaves the next fields', function (t) {
+  const buffer = b4a.from([99, 4, 1, 0, 255, 255, 42, 43]).subarray(1)
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.alike(enc.frame(enc.raw.uint16array).decode(state), Uint16Array.of(1, 65535))
+  t.alike(state, enc.state(5, 7, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(enc.uint.decode(state), 43)
+  t.is(state.start, state.end)
+})
+
+test('nested raw string frames leave the next field', function (t) {
+  const buffer = b4a.from([3, 2, 104, 105, 42])
+  const state = enc.state(0, buffer.byteLength, buffer)
+
+  t.is(enc.frame(enc.frame(enc.raw.string)).decode(state), 'hi')
+  t.alike(state, enc.state(4, 5, buffer))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw buffer frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.alike(enc.frame(enc.raw.buffer).decode(state), b4a.alloc(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw string frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.is(enc.frame(enc.raw.string).decode(state), '')
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw arraybuffer frame leaves the next field', function (t) {
+  const state = enc.state(0, 2, b4a.from([0, 42]))
+
+  t.alike(enc.frame(enc.raw.arraybuffer).decode(state), new ArrayBuffer(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(state.start, state.end)
+})
+
+test('empty raw typed array frame leaves the next fields', function (t) {
+  const state = enc.state(0, 3, b4a.from([0, 42, 43]))
+
+  t.alike(enc.frame(enc.raw.uint16array).decode(state), new Uint16Array(0))
+  t.is(enc.uint.decode(state), 42)
+  t.is(enc.uint.decode(state), 43)
+  t.is(state.start, state.end)
+})
+
 test('uint16array', function (t) {
   const state = enc.state()
 
