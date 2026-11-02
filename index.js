@@ -1179,10 +1179,12 @@ const ipv4 = (exports.ipv4 = {
         n = n * 10 + (c - /* 0 */ 0x30)
       }
 
+      if (n > 0xff) throw outsideWidth(0xff)
+      if (state.start === end) throw wrongPartCount('ipv4', 4)
       state.buffer[state.start++] = n
     }
 
-    state.start = end
+    if (state.start !== end) throw wrongPartCount('ipv4', 4)
   },
   decode(state) {
     if (state.end - state.start < 4) throw new Error('Out of bounds')
@@ -1221,6 +1223,8 @@ const ipv6 = (exports.ipv6 = {
         else if (c >= 0x61 && c <= 0x66) n = n * 0x10 + (c - /* a */ 0x61 + 10)
       }
 
+      if (n > 0xffff) throw outsideWidth(0xffff)
+      if (state.start === end) throw wrongPartCount('ipv6', 8)
       state.buffer[state.start++] = n >>> 8
       state.buffer[state.start++] = n
 
@@ -1229,6 +1233,8 @@ const ipv6 = (exports.ipv6 = {
         split = state.start
       }
     }
+
+    if (split === null && state.start !== end) throw wrongPartCount('ipv6', 8)
 
     if (split !== null) {
       const offset = end - state.start
@@ -1550,4 +1556,8 @@ function intNotInteger() {
 
 function outsideWidth(max) {
   return new RangeError(`value must be between 0 and ${max}`)
+}
+
+function wrongPartCount(name, parts) {
+  return new RangeError(`${name} must have ${parts} parts`)
 }
