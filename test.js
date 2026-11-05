@@ -780,6 +780,35 @@ test('raw uint8array', function (t) {
   t.alike(enc.raw.uint8array.decode(state), Uint8Array.of())
 })
 
+test('framed raw buffer', function (t) {
+  const state = enc.state(0, 5, b4a.from([3, 1, 2, 3, 42]))
+
+  t.alike(enc.frame(enc.raw.buffer).decode(state), b4a.from([1, 2, 3]))
+  t.is(enc.uint.decode(state), 42)
+})
+
+test('framed raw string', function (t) {
+  const state = enc.state(0, 4, b4a.from([2, 104, 105, 42]))
+
+  t.is(enc.frame(enc.raw.string).decode(state), 'hi')
+  t.is(enc.uint.decode(state), 42)
+})
+
+test('framed raw arraybuffer', function (t) {
+  const state = enc.state(0, 5, b4a.from([3, 1, 2, 3, 42]))
+
+  t.alike(enc.frame(enc.raw.arraybuffer).decode(state), Uint8Array.of(1, 2, 3).buffer)
+  t.is(enc.uint.decode(state), 42)
+})
+
+test('framed raw uint16array from unaligned offset', function (t) {
+  const state = enc.state(0, 7, Uint8Array.of(4, 1, 0, 255, 255, 42, 43))
+
+  t.alike(enc.frame(enc.raw.uint16array).decode(state), Uint16Array.of(1, 65535))
+  t.is(enc.uint.decode(state), 42)
+  t.is(enc.uint.decode(state), 43)
+})
+
 test('uint16array', function (t) {
   const state = enc.state()
 
