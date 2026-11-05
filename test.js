@@ -1574,6 +1574,37 @@ test('ipv6', function (t) {
   })
 })
 
+test('ipv4 refuses a part its byte cannot hold', function (t) {
+  t.is(enc.decode(enc.ipv4, enc.encode(enc.ipv4, '255.255.255.255')), '255.255.255.255')
+
+  for (const ip of ['256.1.1.1', '1.2.3.300']) {
+    t.exception.all(() => enc.encode(enc.ipv4, ip), { name: 'RangeError' }, ip)
+  }
+})
+
+test('ipv4 refuses an address without exactly 4 parts', function (t) {
+  for (const ip of ['', '1.2', '1.2.3', '1.2.3.4.5']) {
+    t.exception.all(() => enc.encode(enc.ipv4, ip), { name: 'RangeError' }, ip)
+  }
+})
+
+test('ipv6 refuses a group its 16 bits cannot hold', function (t) {
+  t.is(
+    enc.decode(enc.ipv6, enc.encode(enc.ipv6, 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')),
+    'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+  )
+
+  for (const ip of ['1::fffff', '10000:2:3:4:5:6:7:8']) {
+    t.exception.all(() => enc.encode(enc.ipv6, ip), { name: 'RangeError' }, ip)
+  }
+})
+
+test('ipv6 refuses an address with the wrong number of groups', function (t) {
+  for (const ip of ['1:2:3', '1:2:3:4:5:6:7:8:9', '::1:2:3:4:5:6:7:8']) {
+    t.exception.all(() => enc.encode(enc.ipv6, ip), { name: 'RangeError' }, ip)
+  }
+})
+
 test('ipv6 + port', function (t) {
   const host = '1:2:3:4:5:6:7:8'
   const port = 1234
