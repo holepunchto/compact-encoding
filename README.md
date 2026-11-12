@@ -95,8 +95,8 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.int48` - Encodes a fixed size int48 using `cenc.uint48` with ZigZag encoding.
 - `cenc.int56` - Encodes a fixed size int56 using `cenc.uint56` with ZigZag encoding.
 - `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
-- `cenc.biguint64` - Encodes a fixed size biguint64.
-- `cenc.bigint64` - Encodes a fixed size bigint64 using `cenc.biguint64` with ZigZag encoding.
+- `cenc.biguint64` - Encodes a fixed size biguint64. Writes the same bytes as `cenc.uint64` and carries the whole 64 bit range, which `cenc.uint64` cannot.
+- `cenc.bigint64` - Encodes a fixed size bigint64 using `cenc.biguint64` with ZigZag encoding. Stands in the same relation to `cenc.int64`.
 - `cenc.biguint` - Encodes a biguint with its word count uint prefixed.
 - `cenc.bigint` - Encodes a bigint using `cenc.biguint` with ZigZag encoding.
 - `cenc.float32` - Encodes a fixed size float32.

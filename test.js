@@ -1865,6 +1865,26 @@ test('bitarray', function (t) {
   )
 })
 
+test('out of range names the codec that carries the value', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception.all(() => enc.uint64.encode(state, 2 ** 60), { message: /use biguint64/ })
+  t.exception.all(() => enc.int64.encode(state, MAX_SAFE_INT + 1), { message: /use bigint64/ })
+
+  t.exception.all(() => enc.uint.encode(state, 2 ** 60), { message: /use biguint/ })
+  t.exception.all(() => enc.int.encode(state, MAX_SAFE_INT + 1), { message: /use bigint/ })
+
+  t.exception.all(() => enc.uint56.encode(state, 2 ** 53), {
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.uint64be.encode(state, 2 ** 60), {
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.int56.encode(state, MAX_SAFE_INT + 1), {
+    message: /^int must be between -4503599627370496 and 4503599627370495$/
+  })
+})
+
 function uint64(n, le) {
   const buf = b4a.alloc(8)
   const view = new DataView(buf.buffer, buf.byteOffset, 8)
