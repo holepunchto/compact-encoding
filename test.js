@@ -1954,7 +1954,6 @@ test('the big-endian family writes big-endian bodies', function (t) {
   t.alike(enc.encode(enc.int32be, -3), b4a.from([0x00, 0x00, 0x00, 0x05]))
   t.alike(enc.encode(enc.int64be, -3), b4a.from([0, 0, 0, 0, 0, 0, 0, 5]))
 
-  // uintbe is uint's framing with each body written the other way round
   t.alike(enc.encode(enc.uintbe, 42), b4a.from([42]))
   t.alike(enc.encode(enc.uintbe, 4200), b4a.from([0xfd, 0x10, 0x68]))
   t.alike(enc.encode(enc.uintbe, 0x10000), b4a.from([0xfe, 0x00, 0x01, 0x00, 0x00]))
@@ -1994,9 +1993,17 @@ test('the fixed-width big-endian codecs refuse a value their width cannot hold',
   t.exception.all(() => enc.encode(enc.int16be, 32768), { name: 'RangeError' })
   t.exception.all(() => enc.encode(enc.int16be, -32769), { name: 'RangeError' })
   t.exception.all(() => enc.encode(enc.int32be, 2147483648), { name: 'RangeError' })
+})
 
+test('the big-endian family refuses a truncated value', function (t) {
   t.exception(() => enc.decode(enc.uint16be, b4a.alloc(1)))
   t.exception(() => enc.decode(enc.int64be, b4a.alloc(7)))
+
+  // each framing prefix promises a body the buffer does not carry
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xfd, 0x00])))
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xfe, 0x00, 0x00])))
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xff, 0x00, 0x00, 0x00])))
+  t.exception(() => enc.decode(enc.intbe, b4a.from([0xfd, 0x00])))
 })
 
 test('the big-endian family names nothing out of range', function (t) {

@@ -78,16 +78,18 @@ to build others on top. Feel free to PR more that are missing.
 
 - `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
 - `cenc.uint` - Encodes a uint using the smallest fixed size encoding with a prefix to signal which one. Useful for uints that can be a wide range of values.
-- `cenc.uintbe` - Like `cenc.uint`, with each fixed size body written big-endian. It frames a value the same way, so the two are not interchangeable on the wire.
+- `cenc.uintbe` - Like `cenc.uint`, with each fixed size body written big-endian. Multi-byte values are therefore not interchangeable with `cenc.uint` on the wire.
 - `cenc.uint8` - Encodes a fixed size uint8.
 - `cenc.uint16` - Encodes a fixed size uint16. Useful for things like ports.
 - `cenc.uint16be` - Encodes a fixed size uint16, big-endian.
 - `cenc.uint24` - Encodes a fixed size uint24. Useful for message framing.
 - `cenc.uint32` - Encodes a fixed size uint32. Useful for very large message framing.
+- `cenc.uint32be` - Encodes a fixed size uint32, big-endian.
 - `cenc.uint40` - Encodes a fixed size uint40.
 - `cenc.uint48` - Encodes a fixed size uint48.
 - `cenc.uint56` - Encodes a fixed size uint56.
 - `cenc.uint64` - Encodes a fixed size uint64.
+- `cenc.uint64be` - Encodes a fixed size uint64, big-endian.
 - `cenc.int` - Encodes an int using `cenc.uint` with ZigZag encoding.
 - `cenc.intbe` - Encodes an int using `cenc.uintbe` with ZigZag encoding.
 - `cenc.int8` - Encodes a fixed size int8 using `cenc.uint8` with ZigZag encoding.
