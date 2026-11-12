@@ -526,7 +526,7 @@ test('floats refuse a non-number', function (t) {
   })
 
   const roundtrip = (v) => enc.decode(enc.float64, enc.encode(enc.float64, v))
-  t.ok(Number.isNaN(NaN))
+  t.ok(Number.isNaN(roundtrip(NaN)))
   t.is(roundtrip(Infinity), Infinity)
   t.is(roundtrip(-Infinity), -Infinity)
 })

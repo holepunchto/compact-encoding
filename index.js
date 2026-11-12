@@ -1508,14 +1508,14 @@ function validateUint(n) {
   return n
 }
 
-function validateFloat(n) {
-  if (typeof n !== 'number') throw floatNotNumber()
-}
-
 function validateInt(n) {
   if (!Number.isInteger(n)) throw intNotInteger()
   if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange()
   return n
+}
+
+function validateFloat(n) {
+  if (typeof n !== 'number') throw floatNotNumber()
 }
 
 function validateBigUint(n) {
