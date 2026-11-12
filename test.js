@@ -1907,6 +1907,40 @@ test('out of range names nothing when no codec carries the value', function (t) 
   })
 })
 
+test('out of range on decode names the codec that carries the value', function (t) {
+  const ones = (n) => b4a.from('ff'.repeat(n), 'hex')
+
+  t.exception.all(() => enc.decode(enc.uint, b4a.concat([b4a.from([0xff]), ones(8)])), {
+    name: 'RangeError',
+    message: /use biguint$/
+  })
+  t.exception.all(() => enc.decode(enc.uint64, ones(8)), {
+    name: 'RangeError',
+    message: /use biguint64$/
+  })
+  t.exception.all(() => enc.decode(enc.int64, ones(8)), {
+    name: 'RangeError',
+    message: /^int must be between -4503599627370496 and 4503599627370495, use bigint64$/
+  })
+})
+
+test('out of range on decode names nothing when no codec carries the value', function (t) {
+  const ones = (n) => b4a.from('ff'.repeat(n), 'hex')
+
+  t.exception.all(() => enc.decode(enc.uint56, ones(7)), {
+    name: 'RangeError',
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.decode(enc.uint64be, ones(8)), {
+    name: 'RangeError',
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.decode(enc.int56, ones(7)), {
+    name: 'RangeError',
+    message: /^int must be between -4503599627370496 and 4503599627370495$/
+  })
+})
+
 function uint64(n, le) {
   const buf = b4a.alloc(8)
   const view = new DataView(buf.buffer, buf.byteOffset, 8)

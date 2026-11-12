@@ -97,7 +97,8 @@ const uint = (exports.uint = {
           buffer[start + 6] * 0x100 +
           buffer[start + 7] * 0x10000 +
           buffer[start + 8] * 0x1000000) *
-          0x100000000
+          0x100000000,
+      'biguint'
     )
   }
 })
@@ -239,11 +240,7 @@ const uint56 = (exports.uint56 = {
     state.start = start + 7
   },
   decode(state) {
-    const buffer = state.buffer
-    const start = state.start
-    if (state.end - start < 7) throw new Error('Out of bounds')
-    state.start = start + 7
-    return validateSafeUint(read24(buffer, start) + read32(buffer, start + 3) * 0x1000000)
+    return validateSafeUint(decodeUint56(state))
   }
 })
 
@@ -260,11 +257,7 @@ const uint64 = (exports.uint64 = {
     state.start = start + 8
   },
   decode(state) {
-    const buffer = state.buffer
-    const start = state.start
-    if (state.end - start < 8) throw new Error('Out of bounds')
-    state.start = start + 8
-    return validateSafeUint(read32(buffer, start) + read32(buffer, start + 4) * 0x100000000)
+    return validateSafeUint(decodeUint64(state), 'biguint64')
   }
 })
 
@@ -328,6 +321,22 @@ function read32(buffer, i) {
 
 function read32be(buffer, i) {
   return buffer[i] * 0x1000000 + buffer[i + 1] * 0x10000 + buffer[i + 2] * 0x100 + buffer[i + 3]
+}
+
+function decodeUint56(state) {
+  const buffer = state.buffer
+  const start = state.start
+  if (state.end - start < 7) throw new Error('Out of bounds')
+  state.start = start + 7
+  return read24(buffer, start) + read32(buffer, start + 3) * 0x1000000
+}
+
+function decodeUint64(state) {
+  const buffer = state.buffer
+  const start = state.start
+  if (state.end - start < 8) throw new Error('Out of bounds')
+  state.start = start + 8
+  return read32(buffer, start) + read32(buffer, start + 4) * 0x100000000
 }
 
 // The zig-zag codecs are spelled out rather than built by a factory. Closures
@@ -425,7 +434,7 @@ exports.int56 = {
     uint56.encode(state, zigZagEncodeInt(n))
   },
   decode(state) {
-    return zigZagDecodeInt(uint56.decode(state))
+    return zigZagDecodeInt(validateSafeInt(decodeUint56(state)))
   }
 }
 
@@ -437,7 +446,7 @@ exports.int64 = {
     uint64.encode(state, zigZagEncodeInt(n, 'bigint64'))
   },
   decode(state) {
-    return zigZagDecodeInt(uint64.decode(state))
+    return zigZagDecodeInt(validateSafeInt(decodeUint64(state), 'bigint64'))
   }
 }
 
@@ -1496,10 +1505,16 @@ function zigZagEncodeBigInt(n) {
   return n < 0n ? ~(n << 1n) : n << 1n
 }
 
-function validateSafeUint(n) {
+function validateSafeUint(n, alt) {
   if (n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
 
-  throw outsideUintRange('biguint')
+  throw outsideUintRange(alt)
+}
+
+function validateSafeInt(n, alt) {
+  if (n <= Number.MAX_SAFE_INTEGER) return n
+
+  throw outsideIntRange(alt)
 }
 
 function validateUint(n, alt) {
