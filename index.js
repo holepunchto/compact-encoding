@@ -402,7 +402,7 @@ function decodeUint64(state) {
 
 const uintbe = (exports.uintbe = {
   preencode(state, n) {
-    uint.preencode(state, n)
+    state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
   },
   encode(state, n) {
     validateUint(n)
