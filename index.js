@@ -21,7 +21,7 @@ const uint = (exports.uint = {
     state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
   },
   encode(state, n) {
-    validateUint(n)
+    validateUint(n, 'biguint')
 
     const buffer = state.buffer
     const start = state.start
@@ -252,7 +252,7 @@ const uint64 = (exports.uint64 = {
     state.end += 8
   },
   encode(state, n) {
-    validateUint(n)
+    validateUint(n, 'biguint64')
     const buffer = state.buffer
     const start = state.start
     write32(buffer, start, n)
@@ -335,10 +335,10 @@ function read32be(buffer, i) {
 // underlying codec would turn megamorphic and could no longer be inlined.
 const int = (exports.int = {
   preencode(state, n) {
-    uint.preencode(state, zigZagEncodeInt(n))
+    uint.preencode(state, zigZagEncodeInt(n, 'bigint'))
   },
   encode(state, n) {
-    uint.encode(state, zigZagEncodeInt(n))
+    uint.encode(state, zigZagEncodeInt(n, 'bigint'))
   },
   decode(state) {
     return zigZagDecodeInt(uint.decode(state))
@@ -431,10 +431,10 @@ exports.int56 = {
 
 exports.int64 = {
   preencode(state, n) {
-    uint64.preencode(state, zigZagEncodeInt(n))
+    uint64.preencode(state, zigZagEncodeInt(n, 'bigint64'))
   },
   encode(state, n) {
-    uint64.encode(state, zigZagEncodeInt(n))
+    uint64.encode(state, zigZagEncodeInt(n, 'bigint64'))
   },
   decode(state) {
     return zigZagDecodeInt(uint64.decode(state))
@@ -1481,8 +1481,8 @@ function zigZagDecodeInt(n) {
   return n === 0 ? n : (n & 1) === 0 ? n / 2 : -(n + 1) / 2
 }
 
-function zigZagEncodeInt(n) {
-  validateInt(n)
+function zigZagEncodeInt(n, alt) {
+  validateInt(n, alt)
   // 0, -1, 1, -2, 2, ...
   return n < 0 ? 2 * -n - 1 : n === 0 ? 0 : 2 * n
 }
@@ -1499,18 +1499,18 @@ function zigZagEncodeBigInt(n) {
 function validateSafeUint(n) {
   if (n <= Number.MAX_SAFE_INTEGER) return n // Handles NaN as well
 
-  throw outsideUintRange()
+  throw outsideUintRange('biguint')
 }
 
-function validateUint(n) {
+function validateUint(n, alt) {
   if (!Number.isInteger(n)) throw uintNotInteger()
-  if (!(n >= 0 && n <= Number.MAX_SAFE_INTEGER)) throw outsideUintRange()
+  if (!(n >= 0 && n <= Number.MAX_SAFE_INTEGER)) throw outsideUintRange(alt)
   return n
 }
 
-function validateInt(n) {
+function validateInt(n, alt) {
   if (!Number.isInteger(n)) throw intNotInteger()
-  if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange()
+  if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange(alt)
   return n
 }
 
@@ -1540,12 +1540,14 @@ function validateBigWidth(n, max) {
 // enough to be inlined, which building a message inline would put a stop to.
 // Kept out here, the message costs nothing until it is actually thrown.
 
-function outsideUintRange() {
-  return new RangeError(`uint must be between 0 and ${Number.MAX_SAFE_INTEGER}, use biguint`)
+function outsideUintRange(alt) {
+  const range = `uint must be between 0 and ${Number.MAX_SAFE_INTEGER}`
+  return new RangeError(alt ? `${range}, use ${alt}` : range)
 }
 
-function outsideIntRange() {
-  return new RangeError(`int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}, use bigint`)
+function outsideIntRange(alt) {
+  const range = `int must be between ${MIN_SAFE_INT} and ${MAX_SAFE_INT}`
+  return new RangeError(alt ? `${range}, use ${alt}` : range)
 }
 
 function negativeBigUint() {

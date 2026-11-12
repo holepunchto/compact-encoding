@@ -1865,6 +1865,48 @@ test('bitarray', function (t) {
   )
 })
 
+test('out of range names the codec that carries the value', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception.all(() => enc.uint.encode(state, 2 ** 60), {
+    name: 'RangeError',
+    message: /use biguint$/
+  })
+  t.exception.all(() => enc.int.encode(state, MAX_SAFE_INT + 1), {
+    name: 'RangeError',
+    message: /use bigint$/
+  })
+  t.exception.all(() => enc.uint64.encode(state, 2 ** 60), {
+    name: 'RangeError',
+    message: /use biguint64$/
+  })
+  t.exception.all(() => enc.int64.encode(state, MAX_SAFE_INT + 1), {
+    name: 'RangeError',
+    message: /use bigint64$/
+  })
+})
+
+test('out of range names nothing when no codec carries the value', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception.all(() => enc.uint56.encode(state, 2 ** 53), {
+    name: 'RangeError',
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.uint64be.encode(state, 2 ** 60), {
+    name: 'RangeError',
+    message: /^uint must be between 0 and 9007199254740991$/
+  })
+  t.exception.all(() => enc.int8.encode(state, 2 ** 60), {
+    name: 'RangeError',
+    message: /^int must be between -4503599627370496 and 4503599627370495$/
+  })
+  t.exception.all(() => enc.int56.encode(state, MAX_SAFE_INT + 1), {
+    name: 'RangeError',
+    message: /^int must be between -4503599627370496 and 4503599627370495$/
+  })
+})
+
 function uint64(n, le) {
   const buf = b4a.alloc(8)
   const view = new DataView(buf.buffer, buf.byteOffset, 8)
