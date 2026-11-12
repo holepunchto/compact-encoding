@@ -78,8 +78,10 @@ to build others on top. Feel free to PR more that are missing.
 
 - `cenc.raw` - Pass through encodes a buffer, i.e. a basic copy.
 - `cenc.uint` - Encodes a uint using the smallest fixed size encoding with a prefix to signal which one. Useful for uints that can be a wide range of values.
+- `cenc.uintbe` - Like `cenc.uint`, with each fixed size body written big-endian. It frames a value the same way, so the two are not interchangeable on the wire.
 - `cenc.uint8` - Encodes a fixed size uint8.
 - `cenc.uint16` - Encodes a fixed size uint16. Useful for things like ports.
+- `cenc.uint16be` - Encodes a fixed size uint16, big-endian.
 - `cenc.uint24` - Encodes a fixed size uint24. Useful for message framing.
 - `cenc.uint32` - Encodes a fixed size uint32. Useful for very large message framing.
 - `cenc.uint40` - Encodes a fixed size uint40.
@@ -87,14 +89,18 @@ to build others on top. Feel free to PR more that are missing.
 - `cenc.uint56` - Encodes a fixed size uint56.
 - `cenc.uint64` - Encodes a fixed size uint64.
 - `cenc.int` - Encodes an int using `cenc.uint` with ZigZag encoding.
+- `cenc.intbe` - Encodes an int using `cenc.uintbe` with ZigZag encoding.
 - `cenc.int8` - Encodes a fixed size int8 using `cenc.uint8` with ZigZag encoding.
 - `cenc.int16` - Encodes a fixed size int16 using `cenc.uint16` with ZigZag encoding.
+- `cenc.int16be` - Encodes a fixed size int16 using `cenc.uint16be` with ZigZag encoding.
 - `cenc.int24` - Encodes a fixed size int24 using `cenc.uint24` with ZigZag encoding.
 - `cenc.int32` - Encodes a fixed size int32 using `cenc.uint32` with ZigZag encoding.
+- `cenc.int32be` - Encodes a fixed size int32 using `cenc.uint32be` with ZigZag encoding.
 - `cenc.int40` - Encodes a fixed size int40 using `cenc.uint40` with ZigZag encoding.
 - `cenc.int48` - Encodes a fixed size int48 using `cenc.uint48` with ZigZag encoding.
 - `cenc.int56` - Encodes a fixed size int56 using `cenc.uint56` with ZigZag encoding.
 - `cenc.int64` - Encodes a fixed size int64 using `cenc.uint64` with ZigZag encoding.
+- `cenc.int64be` - Encodes a fixed size int64 using `cenc.uint64be` with ZigZag encoding.
 - `cenc.biguint64` - Encodes a fixed size biguint64. Writes the same bytes as `cenc.uint64` and carries the whole 64 bit range, which `cenc.uint64` cannot.
 - `cenc.bigint64` - Encodes a fixed size bigint64 using `cenc.biguint64` with ZigZag encoding. Writes the same bytes as `cenc.int64` and carries the whole 64 bit range, which `cenc.int64` cannot.
 - `cenc.biguint` - Encodes a biguint with its word count uint prefixed.
