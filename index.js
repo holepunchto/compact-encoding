@@ -134,6 +134,23 @@ const uint16 = (exports.uint16 = {
   }
 })
 
+const uint16be = (exports.uint16be = {
+  preencode(state, n) {
+    state.end += 2
+  },
+  encode(state, n) {
+    validateWidth(n, 0xffff)
+    write16be(state.buffer, state.start, n)
+    state.start += 2
+  },
+  decode(state) {
+    const start = state.start
+    if (state.end - start < 2) throw new Error('Out of bounds')
+    state.start = start + 2
+    return read16be(state.buffer, start)
+  }
+})
+
 const uint24 = (exports.uint24 = {
   preencode(state, n) {
     state.end += 3
@@ -168,7 +185,7 @@ const uint32 = (exports.uint32 = {
   }
 })
 
-exports.uint32be = {
+const uint32be = (exports.uint32be = {
   preencode(state, n) {
     state.end += 4
   },
@@ -183,7 +200,7 @@ exports.uint32be = {
     state.start = start + 4
     return read32be(state.buffer, start)
   }
-}
+})
 
 const uint40 = (exports.uint40 = {
   preencode(state, n) {
@@ -261,7 +278,7 @@ const uint64 = (exports.uint64 = {
   }
 })
 
-exports.uint64be = {
+const uint64be = (exports.uint64be = {
   preencode(state, n) {
     state.end += 8
   },
@@ -274,17 +291,18 @@ exports.uint64be = {
     state.start = start + 8
   },
   decode(state) {
-    const buffer = state.buffer
-    const start = state.start
-    if (state.end - start < 8) throw new Error('Out of bounds')
-    state.start = start + 8
-    return validateSafeUint(read32be(buffer, start) * 0x100000000 + read32be(buffer, start + 4))
+    return validateSafeUint(decodeUint64be(state))
   }
-}
+})
 
 function write16(buffer, i, n) {
   buffer[i] = n
   buffer[i + 1] = n >>> 8
+}
+
+function write16be(buffer, i, n) {
+  buffer[i] = n >>> 8
+  buffer[i + 1] = n
 }
 
 function write24(buffer, i, n) {
@@ -311,6 +329,10 @@ function read16(buffer, i) {
   return buffer[i] + buffer[i + 1] * 0x100
 }
 
+function read16be(buffer, i) {
+  return buffer[i] * 0x100 + buffer[i + 1]
+}
+
 function read24(buffer, i) {
   return buffer[i] + buffer[i + 1] * 0x100 + buffer[i + 2] * 0x10000
 }
@@ -321,6 +343,45 @@ function read32(buffer, i) {
 
 function read32be(buffer, i) {
   return buffer[i] * 0x1000000 + buffer[i + 1] * 0x10000 + buffer[i + 2] * 0x100 + buffer[i + 3]
+}
+
+function decodeUint64be(state) {
+  const buffer = state.buffer
+  const start = state.start
+  if (state.end - start < 8) throw new Error('Out of bounds')
+  state.start = start + 8
+  return read32be(buffer, start) * 0x100000000 + read32be(buffer, start + 4)
+}
+
+function decodeUintbe(state) {
+  const buffer = state.buffer
+  const start = state.start
+  const end = state.end
+
+  if (start >= end) throw new Error('Out of bounds')
+
+  const a = buffer[start]
+
+  if (a <= 0xfc) {
+    state.start = start + 1
+    return a
+  }
+
+  if (a === 0xfd) {
+    if (end - start < 3) throw new Error('Out of bounds')
+    state.start = start + 3
+    return read16be(buffer, start + 1)
+  }
+
+  if (a === 0xfe) {
+    if (end - start < 5) throw new Error('Out of bounds')
+    state.start = start + 5
+    return read32be(buffer, start + 1)
+  }
+
+  if (end - start < 9) throw new Error('Out of bounds')
+  state.start = start + 9
+  return read32be(buffer, start + 1) * 0x100000000 + read32be(buffer, start + 5)
 }
 
 function decodeUint56(state) {
@@ -339,6 +400,39 @@ function decodeUint64(state) {
   return read32(buffer, start) + read32(buffer, start + 4) * 0x100000000
 }
 
+const uintbe = (exports.uintbe = {
+  preencode(state, n) {
+    state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
+  },
+  encode(state, n) {
+    validateUint(n)
+
+    const buffer = state.buffer
+    const start = state.start
+
+    if (n <= 0xfc) {
+      buffer[start] = n
+      state.start = start + 1
+    } else if (n <= 0xffff) {
+      buffer[start] = 0xfd
+      write16be(buffer, start + 1, n)
+      state.start = start + 3
+    } else if (n <= 0xffffffff) {
+      buffer[start] = 0xfe
+      write32be(buffer, start + 1, n)
+      state.start = start + 5
+    } else {
+      buffer[start] = 0xff
+      write32be(buffer, start + 1, Math.floor(n / 0x100000000))
+      write32be(buffer, start + 5, n)
+      state.start = start + 9
+    }
+  },
+  decode(state) {
+    return validateSafeUint(decodeUintbe(state))
+  }
+})
+
 // The zig-zag codecs are spelled out rather than built by a factory. Closures
 // created from the same function share type feedback, so the call to the
 // underlying codec would turn megamorphic and could no longer be inlined.
@@ -353,6 +447,18 @@ const int = (exports.int = {
     return zigZagDecodeInt(uint.decode(state))
   }
 })
+
+exports.intbe = {
+  preencode(state, n) {
+    uintbe.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uintbe.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(validateSafeInt(decodeUintbe(state)))
+  }
+}
 
 exports.int8 = {
   preencode(state, n) {
@@ -378,6 +484,18 @@ exports.int16 = {
   }
 }
 
+exports.int16be = {
+  preencode(state, n) {
+    uint16be.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint16be.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint16be.decode(state))
+  }
+}
+
 exports.int24 = {
   preencode(state, n) {
     uint24.preencode(state, zigZagEncodeInt(n))
@@ -399,6 +517,18 @@ exports.int32 = {
   },
   decode(state) {
     return zigZagDecodeInt(uint32.decode(state))
+  }
+}
+
+exports.int32be = {
+  preencode(state, n) {
+    uint32be.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint32be.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(uint32be.decode(state))
   }
 }
 
@@ -447,6 +577,18 @@ exports.int64 = {
   },
   decode(state) {
     return zigZagDecodeInt(validateSafeInt(decodeUint64(state), 'bigint64'))
+  }
+}
+
+exports.int64be = {
+  preencode(state, n) {
+    uint64be.preencode(state, zigZagEncodeInt(n))
+  },
+  encode(state, n) {
+    uint64be.encode(state, zigZagEncodeInt(n))
+  },
+  decode(state) {
+    return zigZagDecodeInt(validateSafeInt(decodeUint64be(state)))
   }
 }
 

@@ -1947,3 +1947,90 @@ function uint64(n, le) {
   view.setBigUint64(0, n, le)
   return buf
 }
+
+test('the big-endian family writes big-endian bodies', function (t) {
+  t.alike(enc.encode(enc.uint16be, 4200), b4a.from([0x10, 0x68]))
+  t.alike(enc.encode(enc.int16be, -3), b4a.from([0x00, 0x05]))
+  t.alike(enc.encode(enc.int32be, -3), b4a.from([0x00, 0x00, 0x00, 0x05]))
+  t.alike(enc.encode(enc.int64be, -3), b4a.from([0, 0, 0, 0, 0, 0, 0, 5]))
+
+  t.alike(enc.encode(enc.uintbe, 42), b4a.from([42]))
+  t.alike(enc.encode(enc.uintbe, 4200), b4a.from([0xfd, 0x10, 0x68]))
+  t.alike(enc.encode(enc.uintbe, 0x10000), b4a.from([0xfe, 0x00, 0x01, 0x00, 0x00]))
+  t.alike(enc.encode(enc.uintbe, 0x200000000), b4a.from([0xff, 0, 0, 0, 2, 0, 0, 0, 0]))
+  t.alike(enc.encode(enc.intbe, -3), b4a.from([5]))
+})
+
+test('the big-endian family round-trips', function (t) {
+  const cases = [
+    ['uint16be', 0],
+    ['uint16be', 65535],
+    ['int16be', -32768],
+    ['int16be', 32767],
+    ['int32be', -2147483648],
+    ['int32be', 2147483647],
+    ['int64be', MIN_SAFE_INT],
+    ['int64be', MAX_SAFE_INT],
+    ['uintbe', 0],
+    ['uintbe', 0xfc],
+    ['uintbe', 0xfd],
+    ['uintbe', 0xffff],
+    ['uintbe', 0x10000],
+    ['uintbe', 0xffffffff],
+    ['uintbe', 0x100000000],
+    ['intbe', MIN_SAFE_INT],
+    ['intbe', MAX_SAFE_INT],
+    ['intbe', -1]
+  ]
+
+  for (const [name, n] of cases) {
+    t.is(enc.decode(enc[name], enc.encode(enc[name], n)), n, name + ' ' + n)
+  }
+})
+
+test('the fixed-width big-endian codecs refuse a value their width cannot hold', function (t) {
+  t.exception.all(() => enc.encode(enc.uint16be, 65536), { name: 'RangeError' })
+  t.exception.all(() => enc.encode(enc.int16be, 32768), { name: 'RangeError' })
+  t.exception.all(() => enc.encode(enc.int16be, -32769), { name: 'RangeError' })
+  t.exception.all(() => enc.encode(enc.int32be, 2147483648), { name: 'RangeError' })
+})
+
+test('the big-endian family refuses a truncated value', function (t) {
+  t.exception(() => enc.decode(enc.uint16be, b4a.alloc(1)))
+  t.exception(() => enc.decode(enc.int64be, b4a.alloc(7)))
+
+  // each framing prefix promises a body the buffer does not carry
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xfd, 0x00])))
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xfe, 0x00, 0x00])))
+  t.exception(() => enc.decode(enc.uintbe, b4a.from([0xff, 0x00, 0x00, 0x00])))
+  t.exception(() => enc.decode(enc.intbe, b4a.from([0xfd, 0x00])))
+})
+
+test('the big-endian family names nothing out of range', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+  const intRange = /^int must be between -4503599627370496 and 4503599627370495$/
+  const uintRange = /^uint must be between 0 and 9007199254740991$/
+
+  t.exception.all(() => enc.int64be.encode(state, MAX_SAFE_INT + 1), {
+    name: 'RangeError',
+    message: intRange
+  })
+  t.exception.all(() => enc.uintbe.encode(state, 2 ** 60), {
+    name: 'RangeError',
+    message: uintRange
+  })
+  t.exception.all(() => enc.intbe.encode(state, MAX_SAFE_INT + 1), {
+    name: 'RangeError',
+    message: intRange
+  })
+
+  const ones = b4a.from('ff'.repeat(8), 'hex')
+  t.exception.all(() => enc.decode(enc.int64be, ones), {
+    name: 'RangeError',
+    message: intRange
+  })
+  t.exception.all(() => enc.decode(enc.uintbe, b4a.concat([b4a.from([0xff]), ones])), {
+    name: 'RangeError',
+    message: uintRange
+  })
+})

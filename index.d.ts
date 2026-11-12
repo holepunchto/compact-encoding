@@ -52,8 +52,10 @@ interface Raw<T extends Uint8Array = Uint8Array> extends Encoder<T> {
 export const raw: Raw
 
 export const uint: Encoder<number>
+export const uintbe: Encoder<number>
 export const uint8: Encoder<number>
 export const uint16: Encoder<number>
+export const uint16be: Encoder<number>
 export const uint24: Encoder<number>
 export const uint32: Encoder<number>
 export const uint32be: Encoder<number>
@@ -64,14 +66,18 @@ export const uint64: Encoder<number>
 export const uint64be: Encoder<number>
 
 export const int: Encoder<number>
+export const intbe: Encoder<number>
 export const int8: Encoder<number>
 export const int16: Encoder<number>
+export const int16be: Encoder<number>
 export const int24: Encoder<number>
 export const int32: Encoder<number>
+export const int32be: Encoder<number>
 export const int40: Encoder<number>
 export const int48: Encoder<number>
 export const int56: Encoder<number>
 export const int64: Encoder<number>
+export const int64be: Encoder<number>
 
 export const biguint64: Encoder<bigint>
 export const bigint64: Encoder<bigint>
