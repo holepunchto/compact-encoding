@@ -554,6 +554,7 @@ exports.float32 = {
     state.end += 4
   },
   encode(state, n) {
+    validateFloat(n)
     const buffer = state.buffer
     const start = state.start
     f32[0] = n
@@ -583,6 +584,7 @@ exports.float64 = {
     state.end += 8
   },
   encode(state, n) {
+    validateFloat(n)
     const buffer = state.buffer
     const start = state.start
     f64[0] = n
@@ -1512,6 +1514,10 @@ function validateInt(n) {
   return n
 }
 
+function validateFloat(n) {
+  if (typeof n !== 'number') throw floatNotNumber()
+}
+
 function validateBigUint(n) {
   if (n >= 0n) return n
 
@@ -1552,6 +1558,10 @@ function uintNotInteger() {
 
 function intNotInteger() {
   return new TypeError('int must be an integer')
+}
+
+function floatNotNumber() {
+  return new TypeError('float must be a number')
 }
 
 function outsideWidth(max) {
