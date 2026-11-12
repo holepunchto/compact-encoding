@@ -525,10 +525,47 @@ test('floats refuse a non-number', function (t) {
     message: /float must be a number/
   })
 
+  // NaN is a value the format carries, so a value that coerces to one has to be
+  // refused for a reader to tell a typo from a NaN the caller meant.
+  t.exception.all(() => enc.float64.encode(state, 'x'), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  t.exception.all(() => enc.float64.encode(state, {}), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  t.exception.all(() => enc.float64.encode(state, 1n), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  t.exception.all(() => enc.float64.encode(state, Symbol()), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  t.exception.all(() => enc.float32.encode(state, 1n), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
   const roundtrip = (v) => enc.decode(enc.float64, enc.encode(enc.float64, v))
   t.ok(Number.isNaN(roundtrip(NaN)))
   t.is(roundtrip(Infinity), Infinity)
   t.is(roundtrip(-Infinity), -Infinity)
+})
+
+test('float preencode does not check the value', function (t) {
+  const state = enc.state()
+
+  t.execution(() => enc.float64.preencode(state, '5'))
+  t.is(state.end, 8)
+
+  t.execution(() => enc.float32.preencode(state, {}))
+  t.is(state.end, 12)
 })
 
 test('biguint64', function (t) {
