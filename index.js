@@ -21,7 +21,7 @@ const uint = (exports.uint = {
     state.end += n <= 0xfc ? 1 : n <= 0xffff ? 3 : n <= 0xffffffff ? 5 : 9
   },
   encode(state, n) {
-    validateUint(n)
+    validateUint(n, 'biguint')
 
     const buffer = state.buffer
     const start = state.start
@@ -231,7 +231,7 @@ const uint56 = (exports.uint56 = {
     state.end += 7
   },
   encode(state, n) {
-    validateUint(n, null)
+    validateUint(n)
     const buffer = state.buffer
     const start = state.start
     write24(buffer, start, n)
@@ -273,7 +273,7 @@ exports.uint64be = {
     state.end += 8
   },
   encode(state, n) {
-    validateUint(n, null)
+    validateUint(n)
     const buffer = state.buffer
     const start = state.start
     write32be(buffer, start, Math.floor(n / 0x100000000))
@@ -335,10 +335,10 @@ function read32be(buffer, i) {
 // underlying codec would turn megamorphic and could no longer be inlined.
 const int = (exports.int = {
   preencode(state, n) {
-    uint.preencode(state, zigZagEncodeInt(n))
+    uint.preencode(state, zigZagEncodeInt(n, 'bigint'))
   },
   encode(state, n) {
-    uint.encode(state, zigZagEncodeInt(n))
+    uint.encode(state, zigZagEncodeInt(n, 'bigint'))
   },
   decode(state) {
     return zigZagDecodeInt(uint.decode(state))
@@ -419,10 +419,10 @@ exports.int48 = {
 
 exports.int56 = {
   preencode(state, n) {
-    uint56.preencode(state, zigZagEncodeInt(n, null))
+    uint56.preencode(state, zigZagEncodeInt(n))
   },
   encode(state, n) {
-    uint56.encode(state, zigZagEncodeInt(n, null))
+    uint56.encode(state, zigZagEncodeInt(n))
   },
   decode(state) {
     return zigZagDecodeInt(uint56.decode(state))
@@ -1502,13 +1502,13 @@ function validateSafeUint(n) {
   throw outsideUintRange('biguint')
 }
 
-function validateUint(n, alt = 'biguint') {
+function validateUint(n, alt) {
   if (!Number.isInteger(n)) throw uintNotInteger()
   if (!(n >= 0 && n <= Number.MAX_SAFE_INTEGER)) throw outsideUintRange(alt)
   return n
 }
 
-function validateInt(n, alt = 'bigint') {
+function validateInt(n, alt) {
   if (!Number.isInteger(n)) throw intNotInteger()
   if (!(n >= MIN_SAFE_INT && n <= MAX_SAFE_INT)) throw outsideIntRange(alt)
   return n
