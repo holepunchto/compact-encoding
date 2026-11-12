@@ -512,6 +512,25 @@ test('float64', function (t) {
   t.is(state.start, state.end)
 })
 
+test('floats refuse a non-number', function (t) {
+  const state = enc.state(0, 64, b4a.alloc(64))
+
+  t.exception.all(() => enc.float64.encode(state, '5'), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  t.exception.all(() => enc.float32.encode(state, '5'), {
+    name: 'TypeError',
+    message: /float must be a number/
+  })
+
+  const roundtrip = (v) => enc.decode(enc.float64, enc.encode(enc.float64, v))
+  t.ok(Number.isNaN(NaN))
+  t.is(roundtrip(Infinity), Infinity)
+  t.is(roundtrip(-Infinity), -Infinity)
+})
+
 test('biguint64', function (t) {
   const state = enc.state()
 
