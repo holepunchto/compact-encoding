@@ -1124,8 +1124,14 @@ exports.array = function array(enc) {
     decode(state) {
       const len = uint.decode(state)
       if (len > 0x100000) throw new Error('Array is too big')
-      const arr = new Array(len)
-      for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
+      if (len <= 2048) {
+        const arr = new Array(len)
+        for (let i = 0; i < len; i++) arr[i] = enc.decode(state)
+        return arr
+      }
+      // do not trust a big len for allocation, the buffer might not back it
+      const arr = []
+      for (let i = 0; i < len; i++) arr.push(enc.decode(state))
       return arr
     }
   }
