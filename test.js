@@ -1285,6 +1285,32 @@ test('array', function (t) {
   t.exception(() => arr.decode(state))
 })
 
+test('array of zero-width elements', function (t) {
+  const arr = enc.array(enc.none)
+
+  t.alike(enc.decode(arr, enc.encode(arr, [null, null, null])), [null, null, null])
+  t.is(enc.decode(arr, enc.encode(arr, new Array(5000).fill(null))).length, 5000)
+})
+
+test('array bigger than the fast path', function (t) {
+  const arr = enc.array(enc.uint)
+  const list = new Array(5000).fill(0).map((_, i) => i)
+
+  t.alike(enc.decode(arr, enc.encode(arr, list)), list)
+})
+
+test('array with a len the buffer does not back', function (t) {
+  const arr = enc.array(enc.uint)
+  const state = enc.state()
+
+  enc.uint.preencode(state, 0x100000)
+  state.buffer = b4a.alloc(state.end)
+  enc.uint.encode(state, 0x100000)
+  state.start = 0
+
+  t.exception(() => arr.decode(state), /Out of bounds/)
+})
+
 test('raw array', function (t) {
   const state = enc.state()
   const arr = enc.raw.array(enc.bool)
